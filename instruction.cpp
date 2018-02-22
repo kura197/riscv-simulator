@@ -68,24 +68,24 @@ decoder_t decode(uint32_t instr){
 			break;
 		case 'S':
 			if(instr >> 31)
-				d.imm = 0xfffff000 | ((instr & 0xfe000000) >> 25) | ((instr & 0x00000f80) >> 7);
+				d.imm = 0xfffff000 | ((instr & 0xfe000000) >> 20) | ((instr & 0x00000f80) >> 7);
 			else
-				d.imm = ((instr & 0xfe000000) >> 25) | ((instr & 0x00000f80) >> 7);
+				d.imm = ((instr & 0xfe000000) >> 20) | ((instr & 0x00000f80) >> 7);
 			break;
 		case 'B':
 			if(instr >> 31)
-				d.imm = 0xfffff000 | ((instr & 0xfe000000) >> 25) | ((instr & 0x00000f00) >> 8) | ((instr & 0x00000080) << 5);
+				d.imm = 0xfffff000 | ((instr & 0xfe000000) >> 20) | ((instr & 0x00000f00) >> 7) | ((instr & 0x00000080) << 4);
 			else
-				d.imm = ((instr & 0xfe000000) >> 25) | ((instr & 0x00000f00) >> 8) | ((instr & 0x00000080) << 5);
+				d.imm = ((instr & 0xfe000000) >> 20) | ((instr & 0x00000f00) >> 7) | ((instr & 0x00000080) << 4);
 			break;
 		case 'U':
 			d.imm = instr & 0xfffff000;
 			break;
 		case 'J':
 			if(instr >> 31)
-				d.imm = 0xfff00000 | (instr & 0x0007f000) | ((instr & 0x00100000) >> 10) | ((instr & 0x7fe00000) >> 21);
+				d.imm = 0xfff00000 | (instr & 0x000ff000) | ((instr & 0x00100000) >> 9) | ((instr & 0x7fe00000) >> 20);
 			else
-				d.imm = (instr & 0x0007f000) | ((instr & 0x00100000) >> 10) | ((instr & 0x7fe00000) >> 21);
+				d.imm = (instr & 0x000ff000) | ((instr & 0x00100000) >> 9) | ((instr & 0x7fe00000) >> 20);
 			break;
 		default:
 			cout << "unknown opcode" << endl;
@@ -96,30 +96,142 @@ decoder_t decode(uint32_t instr){
 }
 
 void OP_LUI(Emulator* emu, decoder_t d){
-
+	emu->x[d.rd] = 0xfff00000 & d.imm;
+#ifdef DEBUG
+	printf("rd = %d, imm = %08x(%d)\n", d.rd, d.imm, d.imm);
+#endif
 }
 
 void OP_AUIPC(Emulator* emu, decoder_t d){
-
+	emu->x[d.rd] = 0xfff00000 & d.imm + (emu->PC - 4);
+#ifdef DEBUG
+	printf("rd = %d, imm = %08x(%d)\n, PC = %08x", d.rd, d.imm, d.imm, (emu->PC - 4));
+#endif
 }
 
 void OP_JAL(Emulator* emu, decoder_t d){
-
+	emu->x[d.rd] = emu->PC;
+	emu->PC += d.imm - 4;
+#ifdef DEBUG
+	printf("Jump!! rd = %d, imm = %08x(%d)\n, PC = %08x", d.rd, d.imm, d.imm, emu->PC);
+#endif
 }
 
 void OP_JALR(Emulator* emu, decoder_t d){
-
+	emu->x[d.rd] = emu->PC;
+	emu->PC = (d.imm + emu->x[d.rs1]) & 0xfffffffe;
+#ifdef DEBUG
+	printf("Jump!! rd = %d, rs1 = %d, imm = %08x(%d)\n, PC = %08x", d.rd, d.rs1, d.imm, d.imm, emu->PC);
+#endif
 }
 
 void OP_B(Emulator* emu, decoder_t d){
-
+	switch(d.funct3){
+		//BEQ
+		case 0b000:
+			if(emu->x[d.rs1] == emu->x[d.rs2])
+				emu->PC += d.imm - 4;
+			break;
+		//BNE
+		case 0b001:
+			if(emu->x[d.rs1] != emu->x[d.rs2])
+				emu->PC += d.imm - 4;
+			break;
+		//BLT
+		case 0b100:
+			if(emu->x[d.rs1] < emu->x[d.rs2])
+				emu->PC += d.imm - 4;
+			break;
+		//BGE
+		case 0b101:
+			if(emu->x[d.rs1] > emu->x[d.rs2])
+				emu->PC += d.imm - 4;
+			break;
+		//BLTU
+		case 0b110:
+			if((uint32_t)emu->x[d.rs1] < (uint32_t)emu->x[d.rs2])
+				emu->PC += d.imm - 4;
+			break;
+		//BGEU
+		case 0b111:
+			if((uint32_t)emu->x[d.rs1] > (uint32_t)emu->x[d.rs2])
+				emu->PC += d.imm - 4;
+			break;
+		default:
+			cout << "error : OP_B/no match op" << endl;
+			break;
+	}
+#ifdef DEBUG
+	printf("Jump!! rd = %d, rs1 = %d, imm = %08x(%d)\n, PC = %08x", d.rd, d.rs1, d.imm, d.imm, emu->PC);
+#endif
 }
 
 void OP_I(Emulator* emu, decoder_t d){
-
+	switch(d.funct3){
+		//LB
+		case 0b000:
+			{
+			int8_t mem = emu->get_mem8(emu->x[d.rs1] + d.imm);
+			if(mem >> 7)
+				emu->x[d.rd] = mem | 0xffffff00;
+			else
+				emu->x[d.rd] = mem & 0x000000ff;
+			break;
+			}
+		//LH
+		case 0b001:
+			{
+			int16_t mem = emu->get_mem16(emu->x[d.rs1] + d.imm);
+			if(mem >> 15)
+				emu->x[d.rd] = mem | 0xffff0000;
+			else
+				emu->x[d.rd] = mem & 0x0000ffff;
+			break;
+			}
+		//LW
+		case 0b010:
+			emu->x[d.rd] = emu->get_mem32(emu->x[d.rs1] + d.imm);
+			break;
+		//LBU
+		case 0b100:
+			emu->x[d.rd] = emu->get_mem8(emu->x[d.rs1] + d.imm) & 0x000000ff;
+			break;
+		//LHU
+		case 0b101:
+			emu->x[d.rd] = emu->get_mem16(emu->x[d.rs1] + d.imm) & 0x0000ffff;
+			break;
+		//unknown
+		default:
+				cout << "error : OP_I/no match op" << endl;
+				break;
+	}
+#ifdef DEBUG
+	printf("funct3 = %d, rd = %d, rs1 = %d, rs2 = %d, imm = %08x(%d)\n",d.funct3, d.rd, d.rs1, d.rs2, d.imm, d.imm);
+#endif
 }
 
 void OP_S(Emulator* emu, decoder_t d){
+	switch(d.funct3){
+		//SB
+		case 0b000:
+			emu->store_mem8(emu->x[d.rs1] + d.imm, emu->x[d.rs2]);
+			break;
+		//SH
+		case 0b001:
+			emu->store_mem16(emu->x[d.rs1] + d.imm, emu->x[d.rs2]);
+			break;
+		//SW
+		case 0b010:
+			emu->store_mem32(emu->x[d.rs1] + d.imm, emu->x[d.rs2]);
+			break;
+		//unknown
+		default:
+			cout << "error : OP_S/no match op" << endl;
+			break;
+	}
+#ifdef DEBUG
+	printf("funct3 = %d, rd = %d, rs1 = %d, rs2 = %d, imm = %08x(%d)\n",d.funct3, d.rd, d.rs1, d.rs2, d.imm, d.imm);
+#endif
 
 }
 
@@ -163,16 +275,75 @@ void OP_IR(Emulator* emu, decoder_t d){
 				emu->x[d.rd] = (d.imm >> 31) ? (emu->x[d.rs1] >> (d.imm & 0b11111)) | 0xffffff << (32 - d.imm & 0b11111)
 												: emu->x[d.rs1] >> (d.imm & 0b11111);
 			else
-				cout << "error : OR_IR/SRLI_SRAI FUNCT7 erorr" << endl;
+				cout << "error : OP_IR/SRLI_SRAI FUNCT7 erorr" << endl;
 			break;
 		//unknown
 		default:
-				cout << "error : OR_IR/no match op" << endl;
+				cout << "error : OP_IR/no match op" << endl;
 				break;
 	}
+#ifdef DEBUG
+	printf("funct3 = %d, rd = %d, rs1 = %d, imm = %08x(%d)\n",d.funct3, d.rd, d.rs1, d.imm, d.imm);
+#endif
 }
 
 void OP_R(Emulator* emu, decoder_t d){
+	if(d.funct7 == 0b0000000 || d.funct7 == 0b0100000){
+		switch(d.funct3){
+			//ADD/SUB
+			case 0b000:
+				//ADD
+				if(d.funct7 == 0b0000000)
+					emu->x[d.rd] = emu->x[d.rs1] + emu->x[d.rs2];
+				//SUB
+				else
+					emu->x[d.rd] = emu->x[d.rs1] - emu->x[d.rs2];
+				break;
+				//SLL
+			case 0b001:
+				emu->x[d.rd] = emu->x[d.rs1] <<(emu->x[d.rs2] & 0b11111);
+				break;
+				//SLT
+			case 0b010:
+				emu->x[d.rd] = (emu->x[d.rs1] < emu->x[d.rs2]) ? 1 : 0;
+				break;
+				//SLTU
+			case 0b011:
+				emu->x[d.rd] = ((uint32_t)emu->x[d.rs1] < (uint32_t)emu->x[d.rs2]) ? 1 : 0;
+				break;
+				//XOR
+			case 0b100:
+				emu->x[d.rd] = emu->x[d.rs1] ^ emu->x[d.rs2];
+				break;
+				//SRL/SRA
+			case 0b101:
+				//SRL
+				if(d.funct7 == 0b0000000)
+					emu->x[d.rd] = emu->x[d.rs1] >> (emu->x[d.rs2] & 0b11111);
+				//SRA
+				else
+					emu->x[d.rd] = (emu->x[d.rs1] >> 31) ? (emu->x[d.rs1] >> (emu->x[d.rs2] & 0b11111)) | 0xffffff << (32 - emu->x[d.rs2] & 0b11111)
+													: emu->x[d.rs1] >> (emu->x[d.rs2] & 0b11111);
+				break;
+				//OR
+			case 0b110:
+				emu->x[d.rd] = emu->x[d.rs1] | emu->x[d.rs2];
+				break;
+				//AND
+			case 0b111:
+				emu->x[d.rd] = emu->x[d.rs1] & emu->x[d.rs2];
+				break;
+				//unknown
+			default:
+				cout << "error : OP_R/no match op" << endl;
+				break;
+		}
+	}else{
+		cout << "error : OP_R/funct7 error" << endl;
+	}
+#ifdef DEBUG
+	printf("funct7 = %d, funct3 = %d, rd = %d, rs1 = %d, rs2 = %d, imm = %08x(%d)\n",d.funct7, d.funct3, d.rd, d.rs1, d.rs2, d.imm, d.imm);
+#endif
 
 }
 

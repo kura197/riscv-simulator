@@ -7,7 +7,7 @@ run:$(OUT) test.bin
 gdb:$(OUT) test.bin
 	gdb $(OUT) 
 
-$(OUT):main.o instruction.o emulator.hpp
+$(OUT):main.o instruction.o 
 	$(CC) *.o -o $(OUT)
 
 main.o:main.cpp instruction.cpp

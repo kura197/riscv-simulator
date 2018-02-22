@@ -5,7 +5,6 @@
 #include"instruction.hpp"
 using namespace std;
 
-#define DEBUG
 
 #define MEMORY_SIZE (4*5)
 
@@ -27,44 +26,31 @@ int main(int argc, char* argv[]){
 	Emulator emu;
 	emu.read_memory(&binary);
 	binary.close();
-	emu.clear_registers();
+	//emu.clear_registers();
 	init_instruction();
 	//emu.dump_registers();
-	emu.dump_memory(emu.memsize);
+	//emu.dump_memory(emu.memsize);
 	//????
 	emu.memsize -= 4;
 	//
 	while(emu.PC < emu.memsize){
 		uint32_t instr = emu.fetch();
+		//finish
+		if(instr == 0x00000000)
+			break;
 #ifdef DEBUG
 		emu.dump_registers();
-		printf("PC = %08x, Code = %08x\n",emu.PC,instr);
+		//emu.dump_memory(0xf0,8);
+		printf("PC = %08x, Code = %08x\n",emu.PC-4,instr);
 #endif
 		//instruction
 		decoder_t d;
 		d = decode(instr);
 		instruction[d.opcode](&emu,d);
-		emu.PC += 4;
-		emu.x[0] = 0;
 	}
-	//init_instruction();
-	/*
-	while(emu->eip < MEMORY_SIZE){
-		uint8_t code = get_code8(emu,0);
-		printf("EIP = %X, Code = %02X\n", emu->eip, code);
-		if(instruction[code] == NULL){
-			printf("\n\nnot implemented : %x\n\n",code);
-			break;
-		}
-		instruction[code](emu);
-		if(emu->eip==0x00){
-			printf("\n\nend of program\n\n");
-			break;
-		}
-	}	
-	dump_registers(emu);
-	destroy_emu(emu);
-	*/
+	emu.dump_registers();
+	emu.dump_memory(0xf0,8);
+
 	return 0;
 }
 

@@ -7,12 +7,14 @@
 #include<stdio.h>
 using namespace std;
 
+//#define DEBUG
+
 #define REGISTERS_COUNT 32
 #define DUMP_ROW 5
 
 #define MEMSIZE 4*1024*1024
 
-#define STARTPC 0
+#define STARTPC 0x00
 #define RESET_VECTOR 0
 #define FIRST_SP 1024
 
@@ -27,22 +29,13 @@ typedef struct decoder{
 
 class Emulator{
 	public:
-	uint32_t x[REGISTERS_COUNT];
+	int32_t x[REGISTERS_COUNT];
 	uint8_t* memory;
 	int memsize = 0;
 	uint32_t PC;
-	vector<string> registers_name =
-	{
-		"x0","x1","x2","x3","x4","x5",
-		"x6","x7","x8","x9","x10",
-		"x11","x12","x13","x14","x15",
-		"x16","x17","x18","x19","x20",
-		"x21","x22","x23","x24","x25",
-		"x26","x27","x28","x29","x30","x31"
-	};
-
 
 	Emulator(){
+		clear_registers();
 		//always 0
 		x[0] = 0;
 		//stack pointer
@@ -70,7 +63,11 @@ class Emulator{
 	}
 
 	uint32_t fetch(){
-		return (memory[PC+3] << 24)|(memory[PC+2] << 16)|(memory[PC+1] << 8)|(memory[PC]);
+		uint32_t instr;
+		instr = (memory[PC+3] << 24)|(memory[PC+2] << 16)|(memory[PC+1] << 8)|(memory[PC]);
+		x[0] = 0;
+		PC += 4;
+		return instr;
 	}
 
 	void dump_registers(){
@@ -85,13 +82,42 @@ class Emulator{
 		printf("\n");
 	}
 
-	void dump_memory(size_t limit){
-		int i;
-		for(i=0;i<limit;i++){
+	void dump_memory(int32_t start_addr, size_t limit){
+		for(int i = start_addr;i < start_addr + limit; i++){
 			if(i % 5 == 0)	printf("\n");
 			printf("%08x:%02x	",i,memory[i]);
 		}
 		printf("\n");
+	}
+
+	int32_t get_mem32(int32_t addr){
+		return (memory[addr+3] << 24)|(memory[addr+2] << 16)|(memory[addr+1] << 8)|(memory[addr]);
+	}
+
+	int16_t get_mem16(int32_t addr){
+		return (memory[addr+1] << 8)|(memory[addr]);
+	}
+
+	int8_t get_mem8(int32_t addr){
+		return memory[addr];
+	}
+
+	void store_mem32(int32_t addr, int32_t value){
+		for(int i = 0; i < 4; i++){
+			memory[addr] = (value >> 8*i & 0xff);
+			addr++;
+		}
+	}
+
+	void store_mem16(int32_t addr, int16_t value){
+		for(int i = 0; i < 2; i++){
+			memory[addr] = (value >> 8*i & 0xff);
+			addr++;
+		}
+	}
+
+	void store_mem8(int32_t addr, int8_t value){
+		memory[addr] = value;
 	}
 
 };
