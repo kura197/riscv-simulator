@@ -7,10 +7,11 @@ run:$(OUT) test.bin
 gdb:$(OUT) test.bin
 	gdb $(OUT) 
 
-$(OUT):main.o instruction.o 
+$(OUT):main.o instruction.o csr.o trap.o
 	$(CC) *.o -o $(OUT)
+	#rm *.o
 
-main.o:main.cpp instruction.cpp
+main.o:main.cpp instruction.cpp csr.cpp trap.cpp
 	$(CC) *.cpp  -c
 
 clean:

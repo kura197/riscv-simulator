@@ -3,6 +3,8 @@
 #include <string.h>
 #include "emulator.hpp"
 #include "instruction.hpp"
+#include "csr.hpp"
+#include "reg.h"
 
 #define MASK_OPCODE 0x0000007f
 #define RD(x) (x >> 7) & 0b11111
@@ -10,6 +12,7 @@
 #define RS1(x) (x  >> 15) & 0b11111
 #define RS2(x) (x >> 20) & 0b11111
 #define FUNCT7(x) (x >> 25) & 0b1111111
+#define CSR(x) (x >> 20) & 0xfff
 
 using namespace std;
 
@@ -27,6 +30,7 @@ void init_instruction(){
 	instruction[0b0100011] = OP_S;
 	instruction[0b0010011] = OP_IR;
 	instruction[0b0110011] = OP_R;
+	instruction[0b1110011] = OP_SYSTEM;
 }
 
 
@@ -38,6 +42,7 @@ decoder_t decode(uint32_t instr){
 	d.rs1 = RS1(instr);
 	d.rs2 = RS2(instr);
 	d.funct7 = FUNCT7(instr);
+	d.csr = CSR(instr);
 	
 	int r = (d.funct3 == 0b000 || d.funct3 == 0b001 || d.funct3 == 0b010 || d.funct3 == 0b100 || d.funct3 == 0b101) ? 1 : 0;
 	char type;
@@ -105,7 +110,7 @@ void OP_LUI(Emulator* emu, decoder_t d){
 void OP_AUIPC(Emulator* emu, decoder_t d){
 	emu->x[d.rd] = 0xfff00000 & d.imm + (emu->PC - 4);
 #ifdef DEBUG
-	printf("rd = %d, imm = %08x(%d)\n, PC = %08x", d.rd, d.imm, d.imm, (emu->PC - 4));
+	printf("rd = %d, imm = %08x(%d), PC = %08x\n", d.rd, d.imm, d.imm, (emu->PC - 4));
 #endif
 }
 
@@ -113,7 +118,7 @@ void OP_JAL(Emulator* emu, decoder_t d){
 	emu->x[d.rd] = emu->PC;
 	emu->PC += d.imm - 4;
 #ifdef DEBUG
-	printf("Jump!! rd = %d, imm = %08x(%d)\n, PC = %08x", d.rd, d.imm, d.imm, emu->PC);
+	printf("Jump!! rd = %d, imm = %08x(%d), PC = %08x\n", d.rd, d.imm, d.imm, emu->PC);
 #endif
 }
 
@@ -121,7 +126,7 @@ void OP_JALR(Emulator* emu, decoder_t d){
 	emu->x[d.rd] = emu->PC;
 	emu->PC = (d.imm + emu->x[d.rs1]) & 0xfffffffe;
 #ifdef DEBUG
-	printf("Jump!! rd = %d, rs1 = %d, imm = %08x(%d)\n, PC = %08x", d.rd, d.rs1, d.imm, d.imm, emu->PC);
+	printf("Jump!! rd = %d, rs1 = %d, imm = %08x(%d), PC = %08x\n", d.rd, d.rs1, d.imm, d.imm, emu->PC);
 #endif
 }
 
@@ -144,7 +149,7 @@ void OP_B(Emulator* emu, decoder_t d){
 			break;
 		//BGE
 		case 0b101:
-			if(emu->x[d.rs1] > emu->x[d.rs2])
+			if(emu->x[d.rs1] >= emu->x[d.rs2])
 				emu->PC += d.imm - 4;
 			break;
 		//BLTU
@@ -288,6 +293,7 @@ void OP_IR(Emulator* emu, decoder_t d){
 }
 
 void OP_R(Emulator* emu, decoder_t d){
+	//I
 	if(d.funct7 == 0b0000000 || d.funct7 == 0b0100000){
 		switch(d.funct3){
 			//ADD/SUB
@@ -338,6 +344,44 @@ void OP_R(Emulator* emu, decoder_t d){
 				cout << "error : OP_R/no match op" << endl;
 				break;
 		}
+	//ISA-M
+	}else if(d.funct7 == 0b0000001){
+		switch(d.funct3){
+			//MUL
+			case 0b000:
+				emu->x[d.rd] = emu->x[d.rs1] * emu->x[d.rs2];
+				break;
+			//MULH
+			case 0b001:
+				emu->x[d.rd] = (int32_t)(((int64_t)emu->x[d.rs1] * (int64_t)emu->x[d.rs2]) >> 32);
+				break;
+			//MULHSU
+			case 0b010:
+				emu->x[d.rd] = (int32_t)(((int64_t)emu->x[d.rs1] * (uint64_t)emu->x[d.rs2]) >> 32);
+				break;
+			//MULHU
+			case 0b011:
+				emu->x[d.rd] = (int32_t)(((uint64_t)emu->x[d.rs1] * (uint64_t)emu->x[d.rs2]) >> 32);
+				break;
+			//DIV
+			case 0b100:
+				emu->x[d.rd] = emu->x[d.rs1] / emu->x[d.rs2];
+				break;
+			//DIVU
+			case 0b101:
+				emu->x[d.rd] = (uint32_t)emu->x[d.rs1] / (uint32_t)emu->x[d.rs2];
+				break;
+			//REM
+			case 0b110:
+				emu->x[d.rd] = emu->x[d.rs1] % emu->x[d.rs2];
+				break;
+			//REMU
+			case 0b111:
+				emu->x[d.rd] = (uint32_t)emu->x[d.rs1] % (uint32_t)emu->x[d.rs2];
+				break;
+			default:
+				cout << "error : OP-R/ISA-M no match op" << endl;
+		}
 	}else{
 		cout << "error : OP_R/funct7 error" << endl;
 	}
@@ -347,5 +391,75 @@ void OP_R(Emulator* emu, decoder_t d){
 
 }
 
+void OP_SYSTEM(Emulator* emu, decoder_t d){
+	if(num2csr == 0){
+		cout << "illegal privilleged level" << endl;
+		return;
+	}
+	uint8_t uimm = d.rs1;
+	switch(d.funct3){
+		//ECALL / MRET 
+		case 0b000:
+			//ECALL
+			if(d.funct7 == 0 && d.rs1 == 0 && d.rd == 0){
+				int32_t ex_code = (emu->runlevel == U) ? 8 : 11;
+				emu->csr[mcause] = ex_code;
+				//PC should be PC - 4
+				emu->csr[mepc] = emu->V2P(emu->PC);
+				emu->PC = BASE(emu->csr[mtvec]);
+				emu->csr[mstatus] |= MIE(emu->csr[mstatus]) << 7 ;
+				//disable interrupt ??
+				emu->csr[mstatus] &= 0xfffffff7;
+				emu->csr[mstatus] |= emu->runlevel << 11 ;
+				emu->runlevel = M;
+
+				//MRET
+			}else if(d.funct7 == 0x302 && d.rs1 == 0 && d.rd == 0){
+				emu->PC = emu->csr[mepc];
+				emu->runlevel = MPP(emu->csr[mstatus]);
+				//MPP(emu->csr[mcause]) = U;
+				//MIE(emu->csr[mcause]) = MPIE(emu->csr[mcause]);
+				//MPIE(emu->csr[mcause]) = 1;
+				emu->csr[mstatus] |= U << 11 ;
+				emu->csr[mstatus] |= MPIE(emu->csr[mstatus]) << 3 ;
+				emu->csr[mstatus] |= 1 << 7;
+			}else{
+				cout << "error : SYSTEM_OP/funct3 == 000" << endl;
+			}
+			break;
+		//CSRRW
+		case 0b001:
+			emu->x[d.rd] = emu->csr[num2csr(d.csr, emu->runlevel)];
+			emu->csr[num2csr(d.csr, emu->runlevel)] = emu->x[d.rs1];
+			break;
+		//CSRRS
+		case 0b010:
+			emu->x[d.rd] = emu->csr[num2csr(d.csr, emu->runlevel)];
+			emu->csr[num2csr(d.csr, emu->runlevel)] |= emu->x[d.rs1];
+			break;
+		//CSRRC
+		case 0b011:
+			emu->x[d.rd] = emu->csr[num2csr(d.csr, emu->runlevel)];
+			emu->csr[num2csr(d.csr, emu->runlevel)] &= ~emu->x[d.rs1];
+			break;
+		//CSRRWI
+		case 0b101:
+			emu->x[d.rd] = emu->csr[num2csr(d.csr, emu->runlevel)];
+			emu->csr[num2csr(d.csr, emu->runlevel)] = uimm;
+			break;
+		//CSRRSI
+		case 0b110:
+			emu->x[d.rd] = emu->csr[num2csr(d.csr, emu->runlevel)];
+			emu->csr[num2csr(d.csr, emu->runlevel)] |= uimm;
+			break;
+		//CSRRCI
+		case 0b111:
+			emu->x[d.rd] = emu->csr[num2csr(d.csr, emu->runlevel)];
+			emu->csr[num2csr(d.csr, emu->runlevel)] &= ~uimm;
+			break;
+		default:
+			cout << "error : OP_SYSTEM/no match funst3" << endl;
+	}
+}
 
 
