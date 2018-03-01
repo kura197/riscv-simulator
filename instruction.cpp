@@ -31,6 +31,7 @@ void init_instruction(){
 	instruction[0b0010011] = OP_IR;
 	instruction[0b0110011] = OP_R;
 	instruction[0b1110011] = OP_SYSTEM;
+	instruction[0b0101111] = OP_A;
 }
 
 
@@ -93,7 +94,7 @@ decoder_t decode(uint32_t instr){
 				d.imm = (instr & 0x000ff000) | ((instr & 0x00100000) >> 9) | ((instr & 0x7fe00000) >> 20);
 			break;
 		default:
-			cout << "unknown opcode" << endl;
+			//cout << "unknown opcode" << endl;
 			break;
 	}
 
@@ -101,14 +102,14 @@ decoder_t decode(uint32_t instr){
 }
 
 void OP_LUI(Emulator* emu, decoder_t d){
-	emu->x[d.rd] = 0xfff00000 & d.imm;
+	emu->x[d.rd] = 0xfffff000 & d.imm;
 #ifdef DEBUG
 	printf("rd = %d, imm = %08x(%d)\n", d.rd, d.imm, d.imm);
 #endif
 }
 
 void OP_AUIPC(Emulator* emu, decoder_t d){
-	emu->x[d.rd] = 0xfff00000 & d.imm + (emu->PC - 4);
+	emu->x[d.rd] = (0xfffff000 & d.imm) + (emu->PC - 4);
 #ifdef DEBUG
 	printf("rd = %d, imm = %08x(%d), PC = %08x\n", d.rd, d.imm, d.imm, (emu->PC - 4));
 #endif
@@ -462,4 +463,15 @@ void OP_SYSTEM(Emulator* emu, decoder_t d){
 	}
 }
 
-
+void OP_A(Emulator* emu, decoder_t d){
+	switch(d.funct7 & 0x7c){
+		//AMOSWAP.W
+		case 0b00001:
+			emu->x[d.rd] = emu->get_mem32(emu->x[d.rs1]);
+			emu->store_mem32(emu->x[d.rs1], emu->x[d.rs2]);
+			emu->x[d.rs2] = emu->x[d.rd];
+			break;
+		default:
+			cout << "error : OP_A/not yet implemented" << endl;
+	}
+}

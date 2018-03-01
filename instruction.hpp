@@ -16,6 +16,7 @@ void OP_S(Emulator* emu, decoder_t d);
 void OP_IR(Emulator* emu, decoder_t d);
 void OP_R(Emulator* emu, decoder_t d);
 void OP_SYSTEM(Emulator* emu, decoder_t d);
+void OP_A(Emulator* emu, decoder_t d);
 
 typedef void instruction_func_t(Emulator*, decoder_t);
 extern instruction_func_t* instruction[128];

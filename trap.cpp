@@ -35,18 +35,18 @@ void check_interrupt(Emulator* emu, int8_t runlevel, int32_t mideleg, int32_t mi
 				}
 				break;
 			case M:
+					//software interrupt
 				if(MSIP(mip) & MSIE(mie)){
 					interrupt = true;
 					ex_code = 3;
-					//software interrupt
+					//timer interrupt
 				}else if(MTIP(mip) & MTIE(mie)){
 					interrupt = true;
 					ex_code = 7;
-					//timer interrupt
+					//external interrupt
 				}else if(MEIP(mip) & MEIE(mie)){
 					interrupt = true;
 					ex_code = 11;
-					//external interrupt
 				}
 				break;
 			default:
@@ -55,15 +55,26 @@ void check_interrupt(Emulator* emu, int8_t runlevel, int32_t mideleg, int32_t mi
 		}
 
 		if(interrupt){
-			emu->csr[mcause] = 0x8000000 | ex_code;
-			emu->csr[mepc] = emu->V2P(emu->PC);
-			emu->PC = (TVEC_MODE(emu->csr[mtvec]) == 0) ? BASE(emu->csr[mtvec]) : BASE(emu->csr[mtvec]) + 4*ex_code;
-			//MPIE(emu->csr[mstatus]) = MIE(emu->csr[mstatus]);
-			//MIE(emu->csr[mstatus]) = 0;
-			//MPP(emu->csr[mstatus]) = old_runlevel;
-			emu->csr[mstatus] |= MIE(emu->csr[mstatus]) << 7 ;
-			emu->csr[mstatus] &= 0xfffffff7;
-			emu->csr[mstatus] |= old_runlevel << 11 ;
+			//external interrupt
+			if(ex_code == 11 || ex_code == 8){
+				emu->csr[mcause] = 0x8000000 | ex_code;
+				emu->csr[mepc] = emu->V2P(emu->PC);
+				emu->PC = (TVEC_MODE(emu->csr[mtvec]) == 0) ? BASE(emu->csr[mtvec]) : BASE(emu->csr[mtvec]) + 4*emu->read_exinterrupt();
+				emu->csr[mstatus] |= MIE(emu->csr[mstatus]) << 7 ;
+				emu->csr[mstatus] &= 0xfffffff7;
+				emu->csr[mstatus] |= old_runlevel << 11 ;
+
+			}else{
+				emu->csr[mcause] = 0x8000000 | ex_code;
+				emu->csr[mepc] = emu->V2P(emu->PC);
+				emu->PC = (TVEC_MODE(emu->csr[mtvec]) == 0) ? BASE(emu->csr[mtvec]) : BASE(emu->csr[mtvec]) + 4*ex_code;
+				//MPIE(emu->csr[mstatus]) = MIE(emu->csr[mstatus]);
+				//MIE(emu->csr[mstatus]) = 0;
+				//MPP(emu->csr[mstatus]) = old_runlevel;
+				emu->csr[mstatus] |= MIE(emu->csr[mstatus]) << 7 ;
+				emu->csr[mstatus] &= 0xfffffff7;
+				emu->csr[mstatus] |= old_runlevel << 11 ;
+			}
 #ifdef DEBUG
 			cout << "interrupt occur!!  exception code = " << ex_code << endl;
 #endif

@@ -6,6 +6,12 @@ using namespace std;
 int32_t num2csr(int32_t num, int8_t runlevel){
 	switch(num){
 //machine//
+		//mimpid(external interrupt)
+		case 0xf13:
+			if(runlevel > 2)
+				return mstatus;
+			else
+				return 0;
 		//mstatus  
 		case 0x300:
 			if(runlevel > 2)

@@ -11,12 +11,11 @@
 #include "reg.h"
 using namespace std;
 
-#define DEBUG
 
 #define USER_REG_CNT 32
-#define DUMP_ROW 5
+#define DUMP_ROW 8
 
-#define MEMSIZE 0x10000
+#define MEMSIZE 256 * 1024 * 1024
 
 #define STARTPC 0x7c00
 #define RESET_VECTOR 0
@@ -43,7 +42,6 @@ class Emulator{
 	int32_t x[USER_REG_CNT];
 	int32_t csr[CSR_CNT];
 	uint8_t* memory;
-	int memsize = 0;
 	uint32_t PC;
 	int8_t runlevel;
 
@@ -62,14 +60,17 @@ class Emulator{
 		delete memory;
 	}
 
-	void read_memory(ifstream *binary, uint32_t addr){
+	void load_memory(ifstream *binary, uint32_t bin_addr, uint32_t mem_addr, int size){
+		int memsize = 0;
 		uint8_t* memory_ptr = memory;
-		memory_ptr += addr;
-		while(!binary->eof()){
+		memory_ptr += mem_addr;
+		binary->seekg(bin_addr * sizeof(int8_t));
+		while(!binary->eof() && memsize < size){
 			binary->read((char*)memory_ptr, sizeof(uint8_t));
 			memory_ptr++;
 			memsize++;
 		}
+		binary->seekg(0,ios_base::beg);
 	}
 
 	void clear_registers(){
@@ -110,40 +111,50 @@ class Emulator{
 	void dump_memory(int32_t start_addr, size_t limit){
 		int i, k;
 		for(i = start_addr,k = 0;i < start_addr + limit; i++, k++){
-			if(k % 5 == 0)	printf("\n");
+			if(k % DUMP_ROW == 0)	printf("\n");
 			printf("%08x:%02x	",i,memory[i]);
 		}
 		printf("\n");
 	}
 
-	int32_t get_mem32(int32_t addr){
+	int32_t get_mem32(uint32_t addr){
 		return (memory[V2P(addr+3)] << 24)|(memory[V2P(addr+2)] << 16)|(memory[V2P(addr+1)] << 8)|(memory[V2P(addr)]);
 	}
 
-	int16_t get_mem16(int32_t addr){
+	int16_t get_mem16(uint32_t addr){
 		return (memory[V2P(addr+1)] << 8)|(memory[V2P(addr)]);
 	}
 
-	int8_t get_mem8(int32_t addr){
+	int8_t get_mem8(uint32_t addr){
 		return memory[V2P(addr)];
 	}
 
-	void store_mem32(int32_t addr, int32_t value){
+	void store_mem32(uint32_t addr, int32_t value){
 		for(int i = 0; i < 4; i++){
 			memory[V2P(addr)] = (value >> 8*i & 0xff);
 			addr++;
 		}
 	}
 
-	void store_mem16(int32_t addr, int16_t value){
+	void store_mem16(uint32_t addr, int16_t value){
 		for(int i = 0; i < 2; i++){
 			memory[V2P(addr)] = (value >> 8*i & 0xff);
 			addr++;
 		}
 	}
 
-	void store_mem8(int32_t addr, int8_t value){
+	void store_mem8(uint32_t addr, int8_t value){
 		memory[V2P(addr)] = value;
+	}
+
+	//mimpic(external interrupt)
+	uint8_t read_exinterrupt(){
+		uint8_t ex = (csr[mimpid] & 0xff);
+		return ex;
+	}
+
+	void set_exinterrupt(int8_t num){
+		csr[mimpid] = num;
 	}
 
 	uint32_t V2P(uint32_t va){

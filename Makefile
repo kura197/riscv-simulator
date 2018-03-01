@@ -1,10 +1,15 @@
+
+#BIN = xv6memfs.img
+BIN = xv6.img
+
+
 CC = g++ -g
 OUT = emu_risc-v
 
-run:$(OUT) test.bin
-	./$(OUT) test.bin
+run:$(OUT) $(BIN)
+	./$(OUT) $(BIN)
 
-gdb:$(OUT) test.bin
+gdb:$(OUT) $(BIN)
 	gdb $(OUT) 
 
 $(OUT):main.o instruction.o csr.o trap.o

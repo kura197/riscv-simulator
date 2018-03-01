@@ -1,6 +1,7 @@
 #ifndef REG_H_
 #define REG_H_
 
+
 //PTE
 #define D(x) ((x >> 7) & 1)
 #define A(x) ((x >> 6) & 1) 
@@ -57,8 +58,6 @@
 //xtvec
 #define BASE(x) (x >> 2)
 #define TVEC_MODE(x) (x & 0b11)
-
-
 
 
 

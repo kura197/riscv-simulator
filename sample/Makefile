@@ -1,4 +1,4 @@
-CC = riscv32-unknown-linux-gnu-gcc
+CC = riscv32-unknown-linux-gnu-gcc 
 AS = riscv32-unknown-linux-gnu-as
 LD = riscv32-unknown-linux-gnu-ld
 OBJCOPY = riscv32-unknown-linux-gnu-objcopy
@@ -7,7 +7,8 @@ CCFLAGS = -nostdlib -nostartfiles -Ttest.ls
 
 test.bin:test.s
 	$(CC) $(CCFLAGS) test.s  -o test.o
-	$(LD) test.o -o test.bin -Ttest.ls --oformat binary
+	#$(LD) test.o -o test.bin -Ttest.ls --oformat binary
+	$(LD) test.o -o test.bin -e main -Ttext 0 --oformat binary
 
 test.s:test.c
 	$(CC) -O0 test.c -S -o test.s
