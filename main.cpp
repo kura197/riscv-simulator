@@ -1,21 +1,23 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <gflags/gflags.h>
 #include "emulator.hpp"
 #include "instruction.hpp"
 #include "trap.hpp"
-using namespace std;
+#include <gflags/gflags.h>
+#include "gdb.hpp"
 
 #define SECTSIZE 512
 
-DEFINE_bool(d, false, "set debug flag");
-
-#define DEBUG
-
 void ioport(Emulator* emu, ifstream *binary);
 
+DEFINE_bool(d, false, "set debug flag");
+DEFINE_bool(g, false, "wait gdb remote");
+
+using namespace std;
+
 int main(int argc, char* argv[]){
+	gflags::ParseCommandLineFlags(&argc, &argv, true);
 	if(argc==1){
 		cout<<"no input binary" << endl;
 		return 1;
@@ -31,24 +33,30 @@ int main(int argc, char* argv[]){
 	}
 	Emulator emu;
 	emu.load_memory(&binary, 0x0, 0x7c00, 0x200);
-	//emu.load_memory(&binary, 0x200, 0x10000, 4096);
-	//emu.dump_memory(0x10000,0x100);
+	rsp gdb(&emu);
 	init_instruction();
-	//emu.dump_registers();
-	//emu.dump_memory(0x7c00, 64);
 	uint32_t instr;
 	while(emu.PC < MEMSIZE){
 		interrupt(&emu);
+		if(FLAGS_g){
+			for(struct breakpoint *tmp_bp = &gdb.bp; tmp_bp->next != NULL; tmp_bp = tmp_bp->next){
+				if(tmp_bp->addr == emu.PC)
+					gdb.stop = true;
+			}
+			while(gdb.stop){
+				gdb.handle_rsp();
+			}
+		}
 		instr = emu.fetch();
 		//finish
 		if(instr == 0x00000000)
 			break;
-#ifdef DEBUG
-		cout << endl;
-		emu.dump_registers(0);
-		//emu.dump_memory(0x10000,16);
-		printf("PC = %08x, Code = %08x, runlevel = %d\n",emu.V2P(emu.PC-4),instr,emu.runlevel);
-#endif
+		if(FLAGS_d){
+			cout << endl;
+			emu.dump_registers(0);
+			//emu.dump_memory(0x10000,16);
+			printf("PC = %08x, Code = %08x, runlevel = %d\n",emu.V2P(emu.PC-4),instr,emu.runlevel);
+		}
 		//instruction
 		decoder_t d;
 		d = decode(instr);
@@ -75,7 +83,9 @@ void ioport(Emulator* emu, ifstream *binary){
 		uint32_t pa = emu->get_mem32(0x1F4);
 		uint32_t offset = emu->get_mem32(0x1F8) * SECTSIZE;
 		uint32_t size = emu->get_mem32(0x1FC);
-		emu->dump_memory(0x1F4,12);
+		if(FLAGS_d){
+			emu->dump_memory(0x1F4,12);
+		}
 		emu->load_memory(binary, offset, pa, size);
 	}
 }

@@ -1,0 +1,3 @@
+/home/kura/Documents/risc-v_emu/CMakeFiles/rebuild_cache.dir
+/home/kura/Documents/risc-v_emu/CMakeFiles/emu.dir
+/home/kura/Documents/risc-v_emu/CMakeFiles/edit_cache.dir

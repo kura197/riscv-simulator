@@ -1,0 +1,1 @@
+/usr/bin/c++  -g  -rdynamic CMakeFiles/emu.dir/main.cpp.o CMakeFiles/emu.dir/instruction.cpp.o CMakeFiles/emu.dir/csr.cpp.o CMakeFiles/emu.dir/trap.cpp.o CMakeFiles/emu.dir/emulator.cpp.o CMakeFiles/emu.dir/gdb.cpp.o  -o emu /usr/lib/libgflags.so.2.2.1 -lpthread 

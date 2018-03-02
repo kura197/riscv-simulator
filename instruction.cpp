@@ -18,6 +18,7 @@ using namespace std;
 
 instruction_func_t* instruction[128];
 
+
 void init_instruction(){
 	memset(instruction,0,sizeof(instruction));
 
