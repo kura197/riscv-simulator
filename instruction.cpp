@@ -407,7 +407,7 @@ void OP_SYSTEM(Emulator* emu, decoder_t d){
 				int32_t ex_code = (emu->runlevel == U) ? 8 : 11;
 				emu->csr[mcause] = ex_code;
 				//PC should be PC - 4
-				emu->csr[mepc] = emu->V2P(emu->PC);
+				emu->csr[mepc] = emu->V2P(emu->PC, -1);
 				emu->PC = BASE(emu->csr[mtvec]);
 				emu->csr[mstatus] |= MIE(emu->csr[mstatus]) << 7 ;
 				//disable interrupt ??

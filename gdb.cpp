@@ -19,6 +19,7 @@ using namespace std;
 
 DEFINE_int32(port, 20000, "gdb remote port");
 
+
 rsp::rsp(Emulator* emu){
 	/* Clear out the central data structure */
 	client_waiting =  0;		/* GDB client is not waiting for us */
@@ -106,6 +107,9 @@ void rsp::rsp_client_request (){
 			return;
 		case 'c':
 			rsp_continue (buf);
+			return;
+		case 's':
+			rsp_step (buf);
 			return;
 	}
 }
@@ -485,11 +489,9 @@ void rsp::rsp_read_all_regs(){
 	for (r = 0; r < USER_REG_CNT; r++){
 		reg2hex (gdb_emu->x[r], &buf);
 	}
-	/*
-	for (r = 1; r < CSR_CNT; r++){
-		reg2hex (gdb_emu->csr[r], &buf);
-	}
-	*/
+	//reg2hex (gdb_emu->PC-4, &buf);
+	//reg2hex (gdb_emu->PC, &buf);
+	//reg2hex (gdb_emu->x[r], &buf);
 
 	put_packet (buf);
 
@@ -497,14 +499,11 @@ void rsp::rsp_read_all_regs(){
 
 void rsp::reg2hex (unsigned long int val, string* buf){
 	int  n;			/* Counter for digits */
-	for (n = 0; n < 8; n++)
-	{
-#ifdef WORDSBIGENDIAN
-		int  nyb_shift = n * 4;
-#else
-		int  nyb_shift = 28 - (n * 4);
-#endif
-		//buf[n] = hexchars[(val >> nyb_shift) & 0xf];
+	int nyb_shift;
+	for (n = 0; n < 4; n++){
+		nyb_shift = 8 * n + 4;
+		*buf += hexchars[(val >> nyb_shift) & 0xf];
+		nyb_shift -= 4;
 		*buf += hexchars[(val >> nyb_shift) & 0xf];
 	}
 
@@ -527,7 +526,17 @@ void rsp::rsp_read_reg(string buf){
 		reg2hex(gdb_emu->x[regnum], &reply);
 
 	else if(regnum == 0x20)
-		reg2hex(gdb_emu->PC, &reply);
+		reg2hex(gdb_emu->get_PC(), &reply);
+
+	else if(regnum == 0x1041)
+		reg2hex(gdb_emu->get_PC()-4, &reply);
+//??
+	else if(regnum == 0x342)
+		reg2hex(gdb_emu->get_PC(), &reply);
+
+//??
+	else if(regnum == 0xf51)
+		reg2hex(gdb_emu->get_PC(), &reply);
 
 	else{
 		/* Error response if we don't know the register */
@@ -611,16 +620,7 @@ void rsp::rsp_insert_matchpoint (string buf){
 	switch (type){
 		case BP_MEMORY:
 			put_str_packet ("OK");
-			struct breakpoint *new_bp, *tmp_bp;
-			new_bp -> addr = addr;
-			tmp_bp = &bp;
-			while(1){
-				if(tmp_bp->next == NULL){
-					tmp_bp->next = new_bp;
-					break;
-				}
-				tmp_bp = tmp_bp->next;
-			}
+			bp.push_back(addr);
 			return;
 
 		case BP_HARDWARE:
@@ -675,14 +675,11 @@ void rsp::rsp_remove_matchpoint (string buf){
 	/* Sort out the type of matchpoint */
 	switch (type){
 		case BP_MEMORY:
-			struct breakpoint* tmp_bp;
-			tmp_bp = &bp;
-			while(1){
-				if(tmp_bp->next->addr == addr){
-					tmp_bp->next = tmp_bp->next->next;
-					break;
+			for(int x = 0; x < bp.size(); x++){
+				if(bp[x] == addr){
+					remove(bp,x);
+					x--;
 				}
-				tmp_bp = tmp_bp->next;
 			}
 			put_str_packet ("OK");
 			return;
@@ -716,14 +713,33 @@ void rsp::rsp_continue (string buf){
 	unsigned long int  addr;		/* Address to continue from, if any */
 
 	if (0 == strcmp ("c", buf.c_str())){
-		addr = gdb_emu->PC;	/* Default uses current NPC */
+		addr = gdb_emu->get_PC();	/* Default uses current NPC */
 	}
 	else if (1 != sscanf (buf.c_str(), "c%lx", &addr)){
 		cout << "Warning: RSP continue address " << buf << "not recognized: ignored" << endl;
-		addr = gdb_emu->PC;	/* Default uses current NPC */
+		addr = gdb_emu->get_PC();	/* Default uses current NPC */
 	}
 
 	//rsp_continue_generic (addr, EXCEPT_NONE);
 	stop = false;
 
 }	/* rsp_continue () */
+
+void rsp::rsp_step (string buf){
+	unsigned long int  addr;		/* The address to step from, if any */
+
+	if (0 == strcmp ("s", buf.c_str()))
+	{
+		addr = gdb_emu->get_PC();	/* Default uses current NPC */
+	}
+	else if (1 != sscanf (buf.c_str(), "s%lx", &addr))
+	{
+		cout << "Warning: RSP step address " << buf << "not recognized: ignored" << endl;
+		addr = gdb_emu->get_PC();	/* Default uses current NPC */
+	}
+
+	//rsp_step_generic (addr, EXCEPT_NONE);
+	stop = false;
+	step = true;
+
+}	/* rsp_step () */

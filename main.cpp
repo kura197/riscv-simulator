@@ -39,9 +39,18 @@ int main(int argc, char* argv[]){
 	while(emu.PC < MEMSIZE){
 		interrupt(&emu);
 		if(FLAGS_g){
-			for(struct breakpoint *tmp_bp = &gdb.bp; tmp_bp->next != NULL; tmp_bp = tmp_bp->next){
-				if(tmp_bp->addr == emu.PC)
-					gdb.stop = true;
+			if(gdb.step){
+				gdb.stop = true;
+				gdb.step = false;
+				gdb.rsp_report_exception();
+			}else{
+				for(int x : gdb.bp){
+					if(emu.PC == x){
+						gdb.stop = true;
+						gdb.rsp_report_exception();
+						break;
+					}
+				}
 			}
 			while(gdb.stop){
 				gdb.handle_rsp();
@@ -55,7 +64,7 @@ int main(int argc, char* argv[]){
 			cout << endl;
 			emu.dump_registers(0);
 			//emu.dump_memory(0x10000,16);
-			printf("PC = %08x, Code = %08x, runlevel = %d\n",emu.V2P(emu.PC-4),instr,emu.runlevel);
+			printf("PC = %08x, Code = %08x, runlevel = %d\n",emu.get_PC()-4,instr,emu.runlevel);
 		}
 		//instruction
 		decoder_t d;
@@ -64,7 +73,7 @@ int main(int argc, char* argv[]){
 		ioport(&emu, &binary);
 	}
 	emu.dump_registers(0);
-	printf("program ended successfully at PC = %08x\n", emu.V2P(emu.PC-4));
+	printf("program ended successfully at PC = %08x\n", emu.get_PC()-4);
 	//emu.dump_memory(0x10000,0x20);
 
 	binary.close();

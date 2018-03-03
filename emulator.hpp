@@ -21,6 +21,11 @@ using namespace std;
 #define LEVELS 2
 #define PTESIZE 4;
 
+//MMU
+#define PAGE_X 0
+#define PAGE_W 1
+#define PAGE_R 2
+
 enum PLEVEL{U, S, R, M};
 
 typedef struct decoder{
@@ -42,6 +47,7 @@ class Emulator{
 	int8_t runlevel;
 	Emulator();
 	~Emulator();
+	uint32_t get_PC(){ return V2P(PC, -1);};
 	void load_memory(ifstream *binary, uint32_t bin_addr, uint32_t mem_addr, int size);
 	void clear_registers();
 	uint32_t fetch();
@@ -55,7 +61,7 @@ class Emulator{
 	void store_mem8(uint32_t addr, int8_t value);
 	uint8_t read_exinterrupt();
 	void set_exinterrupt(int8_t num);
-	uint32_t V2P(uint32_t va);
+	uint32_t V2P(uint32_t va, int mode);
 };
 
 #endif

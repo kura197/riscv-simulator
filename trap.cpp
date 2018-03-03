@@ -58,7 +58,7 @@ void check_interrupt(Emulator* emu, int8_t runlevel, int32_t mideleg, int32_t mi
 			//external interrupt
 			if(ex_code == 11 || ex_code == 8){
 				emu->csr[mcause] = 0x8000000 | ex_code;
-				emu->csr[mepc] = emu->V2P(emu->PC);
+				emu->csr[mepc] = emu->V2P(emu->PC, -1);
 				emu->PC = (TVEC_MODE(emu->csr[mtvec]) == 0) ? BASE(emu->csr[mtvec]) : BASE(emu->csr[mtvec]) + 4*emu->read_exinterrupt();
 				emu->csr[mstatus] |= MIE(emu->csr[mstatus]) << 7 ;
 				emu->csr[mstatus] &= 0xfffffff7;
@@ -66,7 +66,7 @@ void check_interrupt(Emulator* emu, int8_t runlevel, int32_t mideleg, int32_t mi
 
 			}else{
 				emu->csr[mcause] = 0x8000000 | ex_code;
-				emu->csr[mepc] = emu->V2P(emu->PC);
+				emu->csr[mepc] = emu->V2P(emu->PC, -1);
 				emu->PC = (TVEC_MODE(emu->csr[mtvec]) == 0) ? BASE(emu->csr[mtvec]) : BASE(emu->csr[mtvec]) + 4*ex_code;
 				//MPIE(emu->csr[mstatus]) = MIE(emu->csr[mstatus]);
 				//MIE(emu->csr[mstatus]) = 0;

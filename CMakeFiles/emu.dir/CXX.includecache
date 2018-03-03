@@ -87,6 +87,8 @@ iostream
 -
 string
 -
+vector
+-
 emulator.hpp
 /home/kura/Documents/risc-v_emu/emulator.hpp
 

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 #include "emulator.hpp"
 
 /*! Size of the matchpoint hash table. Largest prime < 2^10 */
@@ -20,13 +21,14 @@ enum mp_type {
 	WP_ACCESS   = 4
 };
 
-struct breakpoint{
-	int addr;
-	struct breakpoint* next;
-};
-
 static const char hexchars[]="0123456789abcdef";
 
+// vectorからindex番目の要素を削除する
+template<typename T>
+void remove(std::vector<T>& vector, unsigned int index)
+{
+    vector.erase(vector.begin() + index);
+}
 
 class rsp{
 	int                client_waiting;	/*!< Is client waiting a response? */
@@ -38,7 +40,8 @@ class rsp{
 
 public:
 	bool stop = false;
-	struct breakpoint bp;
+	bool step = false;
+	vector<unsigned int> bp;
 
 	rsp(Emulator*);
 	~rsp(){ rsp_client_close(); };
@@ -63,6 +66,7 @@ public:
 	void rsp_insert_matchpoint (string buf);
 	void rsp_remove_matchpoint (string buf);
 	void rsp_continue(string buf);
+	void rsp_step (string buf);
 };
 
 #endif

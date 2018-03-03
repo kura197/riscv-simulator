@@ -48,7 +48,7 @@ void Emulator::clear_registers(){
 
 uint32_t Emulator::fetch(){
 	uint32_t instr;
-	instr = (memory[V2P(PC+3)] << 24)|(memory[V2P(PC+2)] << 16)|(memory[V2P(PC+1)] << 8)|(memory[V2P(PC)]);
+	instr = (memory[V2P(PC+3, PAGE_X)] << 24)|(memory[V2P(PC+2, PAGE_X)] << 16)|(memory[V2P(PC+1, PAGE_X)] << 8)|(memory[V2P(PC, PAGE_X)]);
 	x[0] = 0;
 	PC += 4;
 	return instr;
@@ -84,33 +84,33 @@ void Emulator::dump_memory(int32_t start_addr, size_t limit){
 }
 
 int32_t Emulator::get_mem32(uint32_t addr){
-	return (memory[V2P(addr+3)] << 24)|(memory[V2P(addr+2)] << 16)|(memory[V2P(addr+1)] << 8)|(memory[V2P(addr)]);
+	return (memory[V2P(addr+3, PAGE_R)] << 24)|(memory[V2P(addr+2, PAGE_R)] << 16)|(memory[V2P(addr+1, PAGE_R)] << 8)|(memory[V2P(addr, PAGE_R)]);
 }
 
 int16_t Emulator::get_mem16(uint32_t addr){
-	return (memory[V2P(addr+1)] << 8)|(memory[V2P(addr)]);
+	return (memory[V2P(addr+1, PAGE_R)] << 8)|(memory[V2P(addr, PAGE_R)]);
 }
 
 int8_t Emulator::get_mem8(uint32_t addr){
-	return memory[V2P(addr)];
+	return memory[V2P(addr, PAGE_R)];
 }
 
 void Emulator::store_mem32(uint32_t addr, int32_t value){
 	for(int i = 0; i < 4; i++){
-		memory[V2P(addr)] = (value >> 8*i & 0xff);
+		memory[V2P(addr, PAGE_W)] = (value >> 8*i & 0xff);
 		addr++;
 	}
 }
 
 void Emulator::store_mem16(uint32_t addr, int16_t value){
 	for(int i = 0; i < 2; i++){
-		memory[V2P(addr)] = (value >> 8*i & 0xff);
+		memory[V2P(addr, PAGE_W)] = (value >> 8*i & 0xff);
 		addr++;
 	}
 }
 
 void Emulator::store_mem8(uint32_t addr, int8_t value){
-	memory[V2P(addr)] = value;
+	memory[V2P(addr, PAGE_W)] = value;
 }
 
 //mimpic(external interrupt)
@@ -123,7 +123,7 @@ void Emulator::set_exinterrupt(int8_t num){
 	csr[mimpid] = num;
 }
 
-uint32_t Emulator::V2P(uint32_t va){
+uint32_t Emulator::V2P(uint32_t va, int mode){
 	if(MODE(csr[satp]) == 0)
 		return va;
 	uint32_t pa;
@@ -141,25 +141,55 @@ uint32_t Emulator::V2P(uint32_t va){
 	while(1){
 		pte = (uint32_t)(a + vpn[i] * PAGESIZE);
 		if(V(memory[pte]) == 0 || (R(memory[pte]) == 0 && W(memory[pte]) == 1)){
-			cout << "page-fault exception" << endl;
+			cout << "page-fault exception : V = 0 or (R = 0 & W = 1)" << endl;
 			return 0;
 		}
 		if(R(memory[pte]) == 1 || X(memory[pte]) == 1)
 			break;
 		i = i - 1;
 		if(i < 0){
-			cout << "page-fault exception" << endl;
+			cout << "page-fault exception : cannot find R = 1 or X = 1 pte" << endl;
 			return 0;
 		}
 		a = (memory[pte] >> 10) * PAGESIZE; 
 	}
 	//
 	//check mstatus reg
+	switch(mode){
+		case PAGE_X:
+			if(X(memory[pte]) == 0){
+				cout << "page-fault exception : this page is not excutable" << endl;
+				return 0;
+			}
+			break;
+		case PAGE_W:
+			if(W(memory[pte]) == 0){
+				cout << "page-fault exception : this page is not writeable" << endl;
+				return 0;
+			}
+			break;
+		case PAGE_R:
+			if(R(memory[pte]) == 0){
+				cout << "page-fault exception : this page is not readable" << endl;
+				return 0;
+			}
+			break;
+		default:
+			break;
+	}
+	if(runlevel == U && U(memory[pte]) == 0){
+		cout << "page-fault exception : this page is not accessable by User mode" << endl;
+		return 0;
+	}
+	if(MXR(csr[mstatus]) == 0 && X(memory[pte]) == 1){
+		cout << "page-fault exception : cannot excute X page when MXR == 0" << endl;
+		return 0;
+	}
 	//
 	ppn[1] = memory[pte] >> 20;
 	ppn[0] = memory[pte] >> 10 & 0x3ff;
 	if(i > 0 && ppn[0] != 0){
-		cout << "page-fault exception" << endl;
+		cout << "page-fault exception : ppn error" << endl;
 		return 0;
 	}
 
