@@ -11,7 +11,7 @@ using namespace std;
 #define NUM_REGS (USER_REG_CNT + CSR_CNT)
 #define DUMP_ROW 8
 
-#define MEMSIZE 256 * 1024 * 1024
+#define MEMSIZE 512 * 1024 * 1024
 
 #define STARTPC 0x7c00
 #define RESET_VECTOR 0
@@ -19,7 +19,7 @@ using namespace std;
 
 #define PAGESIZE 4096
 #define LEVELS 2
-#define PTESIZE 4;
+#define PTESIZE 4
 
 //MMU
 #define PAGE_X 0
@@ -45,6 +45,8 @@ class Emulator{
 	uint8_t* memory;
 	uint32_t PC;
 	int8_t runlevel;
+
+
 	Emulator();
 	~Emulator();
 	uint32_t get_PC(){ return V2P(PC, -1);};
@@ -61,7 +63,9 @@ class Emulator{
 	void store_mem8(uint32_t addr, int8_t value);
 	uint8_t read_exinterrupt();
 	void set_exinterrupt(int8_t num);
+	int32_t get_phys_mem32(int32_t addr);
 	uint32_t V2P(uint32_t va, int mode);
+	void print_error(string error, int32_t va, int32_t a, int i, int32_t pte, int32_t old_pte);
 };
 
 #endif

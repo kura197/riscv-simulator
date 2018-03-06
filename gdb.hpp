@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include<sys/time.h>
 #include "emulator.hpp"
 
 /*! Size of the matchpoint hash table. Largest prime < 2^10 */
@@ -34,13 +35,16 @@ class rsp{
 	int                client_waiting;	/*!< Is client waiting a response? */
 	int                proto_num;		/*!< Number of the protocol used */
 	int                client_fd;		/*!< FD for talking to GDB */
-	int                sigval;		/*!< GDB signal for any exception */
 	unsigned long int  start_addr;	/*!< Start of last run */
 	Emulator *gdb_emu;
+	struct timeval tv;
+	fd_set readfd;
 
 public:
+	int                sigval;		/*!< GDB signal for any exception */
 	bool stop = false;
 	bool step = false;
+	bool attach = false;
 	vector<unsigned int> bp;
 
 	rsp(Emulator*);
@@ -67,6 +71,7 @@ public:
 	void rsp_remove_matchpoint (string buf);
 	void rsp_continue(string buf);
 	void rsp_step (string buf);
+	int handle_interrupt_rsp();
 };
 
 #endif

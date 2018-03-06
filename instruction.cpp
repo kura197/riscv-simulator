@@ -46,9 +46,9 @@ decoder_t decode(uint32_t instr){
 	d.funct7 = FUNCT7(instr);
 	d.csr = CSR(instr);
 	
-	int r = (d.funct3 == 0b000 || d.funct3 == 0b001 || d.funct3 == 0b010 || d.funct3 == 0b100 || d.funct3 == 0b101) ? 1 : 0;
+	int r = (d.funct3 == 0b001 || d.funct3 == 0b101) ? 1 : 0;
 	char type;
-	if(d.opcode == 0b0110011 || (d.opcode == 0b0010011 && !r)){
+	if(d.opcode == 0b0110011 || (d.opcode == 0b0010011 && r)){
 		type = 'R';
 	}else if(d.opcode == 0b0000011 || d.opcode == 0b0010011 || d.opcode == 0b1100111){
 		type = 'I';
@@ -270,17 +270,18 @@ void OP_IR(Emulator* emu, decoder_t d){
 			break;
 		//SLLI
 		case 0b001:
-			emu->x[d.rd] = emu->x[d.rs1] << (d.imm & 0b11111);
+			emu->x[d.rd] = emu->x[d.rs1] << d.rs2;
 			break;
 		//SRLI SRAI
 		case 0b101:
 			//SRLI
 			if(d.funct7 == 0b0000000)
-				emu->x[d.rd] = emu->x[d.rs1] >> (d.imm & 0b11111);
+				emu->x[d.rd] = (uint32_t)emu->x[d.rs1] >> d.rs2;
 			//SRAI
 			else if(d.funct7	== 0b0100000)
-				emu->x[d.rd] = (d.imm >> 31) ? (emu->x[d.rs1] >> (d.imm & 0b11111)) | 0xffffff << (32 - d.imm & 0b11111)
-												: emu->x[d.rs1] >> (d.imm & 0b11111);
+				//emu->x[d.rd] = (d.imm >> 31) ? (emu->x[d.rs1] >> (d.imm & 0b11111)) | 0xffffff << (32 - d.imm & 0b11111)
+				//								: emu->x[d.rs1] >> (d.imm & 0b11111);
+				emu->x[d.rd] = emu->x[d.rs1] >> d.rs2;
 			else
 				cout << "error : OP_IR/SRLI_SRAI FUNCT7 erorr" << endl;
 			break;
@@ -327,11 +328,12 @@ void OP_R(Emulator* emu, decoder_t d){
 			case 0b101:
 				//SRL
 				if(d.funct7 == 0b0000000)
-					emu->x[d.rd] = emu->x[d.rs1] >> (emu->x[d.rs2] & 0b11111);
+					emu->x[d.rd] = (uint32_t)emu->x[d.rs1] >> (emu->x[d.rs2] & 0b11111);
 				//SRA
 				else
-					emu->x[d.rd] = (emu->x[d.rs1] >> 31) ? (emu->x[d.rs1] >> (emu->x[d.rs2] & 0b11111)) | 0xffffff << (32 - emu->x[d.rs2] & 0b11111)
-													: emu->x[d.rs1] >> (emu->x[d.rs2] & 0b11111);
+					//emu->x[d.rd] = (emu->x[d.rs1] >> 31) ? (emu->x[d.rs1] >> (emu->x[d.rs2] & 0b11111)) | 0xffffff << (32 - emu->x[d.rs2] & 0b11111)
+					//								: emu->x[d.rs1] >> (emu->x[d.rs2] & 0b11111);
+					emu->x[d.rd] = emu->x[d.rs1] >> (emu->x[d.rs2] & 0b11111);
 				break;
 				//OR
 			case 0b110:

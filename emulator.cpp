@@ -19,6 +19,7 @@ Emulator::Emulator(){
 	x[2] = FIRST_SP;
 	PC = STARTPC;
 	runlevel = M;
+	csr[misa] = 0x40001101;
 	memory = new uint8_t[MEMSIZE];
 }
 
@@ -123,6 +124,10 @@ void Emulator::set_exinterrupt(int8_t num){
 	csr[mimpid] = num;
 }
 
+int32_t Emulator::get_phys_mem32(int32_t addr){
+	return (memory[addr+3] << 24)|(memory[addr+2] << 16)|(memory[addr+1] << 8)|memory[addr];
+}
+
 uint32_t Emulator::V2P(uint32_t va, int mode){
 	if(MODE(csr[satp]) == 0)
 		return va;
@@ -138,59 +143,65 @@ uint32_t Emulator::V2P(uint32_t va, int mode){
 	uint32_t a = (int32_t)PPN(csr[satp]) * PAGESIZE;
 	uint32_t i = LEVELS - 1;
 	uint32_t pte;
+	uint32_t old_pte;
 	while(1){
-		pte = (uint32_t)(a + vpn[i] * PAGESIZE);
-		if(V(memory[pte]) == 0 || (R(memory[pte]) == 0 && W(memory[pte]) == 1)){
-			cout << "page-fault exception : V = 0 or (R = 0 & W = 1)" << endl;
-			return 0;
+		pte = (uint32_t)(a + vpn[i] * PTESIZE);
+		if(V(get_phys_mem32(pte)) == 0){
+			print_error("V = 0", va, a, i, pte, old_pte);
+			return -1;
 		}
-		if(R(memory[pte]) == 1 || X(memory[pte]) == 1)
+		if(R(get_phys_mem32(pte)) == 0 && W(get_phys_mem32(pte)) == 1){
+			print_error("R = 0 & W = 1", va, a, i, pte, old_pte);
+			return -1;
+		}
+		if(R(get_phys_mem32(pte)) == 1 || X(get_phys_mem32(pte)) == 1)
 			break;
 		i = i - 1;
+		old_pte = pte;
 		if(i < 0){
-			cout << "page-fault exception : cannot find R = 1 or X = 1 pte" << endl;
-			return 0;
+			print_error("cannot find R = 1 or X = 1 pte", va, a, i, pte, old_pte);
+			return -1;
 		}
-		a = (memory[pte] >> 10) * PAGESIZE; 
+		a = (get_phys_mem32(pte) >> 10) * PAGESIZE; 
 	}
 	//
 	//check mstatus reg
 	switch(mode){
 		case PAGE_X:
-			if(X(memory[pte]) == 0){
-				cout << "page-fault exception : this page is not excutable" << endl;
-				return 0;
+			if(X(get_phys_mem32(pte)) == 0){
+				print_error("this page is not excutable", va, a, i, pte, old_pte);
+				return -1;
 			}
 			break;
 		case PAGE_W:
-			if(W(memory[pte]) == 0){
-				cout << "page-fault exception : this page is not writeable" << endl;
-				return 0;
+			if(W(get_phys_mem32(pte)) == 0){
+				print_error("this page is not writeable", va, a, i, pte, old_pte);
+				return -1;
 			}
 			break;
 		case PAGE_R:
-			if(R(memory[pte]) == 0){
-				cout << "page-fault exception : this page is not readable" << endl;
-				return 0;
+			if(R(get_phys_mem32(pte)) == 0){
+				print_error("this page is not readable", va, a, i, pte, old_pte);
+				return -1;
 			}
 			break;
 		default:
 			break;
 	}
-	if(runlevel == U && U(memory[pte]) == 0){
-		cout << "page-fault exception : this page is not accessable by User mode" << endl;
-		return 0;
+	if(runlevel == U && U(get_phys_mem32(pte)) == 0){
+		print_error("this page is not accessable by User mode", va, a, i, pte, old_pte);
+		return -1;
 	}
-	if(MXR(csr[mstatus]) == 0 && X(memory[pte]) == 1){
-		cout << "page-fault exception : cannot excute X page when MXR == 0" << endl;
-		return 0;
+	if(MXR(csr[mstatus]) == 0 && X(get_phys_mem32(pte)) == 1){
+		print_error("cannot excute X page when MXR = 0", va, a, i, pte, old_pte);
+		return -1;
 	}
 	//
-	ppn[1] = memory[pte] >> 20;
-	ppn[0] = memory[pte] >> 10 & 0x3ff;
+	ppn[1] = get_phys_mem32(pte) >> 20;
+	ppn[0] = (get_phys_mem32(pte) >> 10) & 0x3ff;
 	if(i > 0 && ppn[0] != 0){
-		cout << "page-fault exception : ppn error" << endl;
-		return 0;
+		print_error("ppn error", va, a, i, pte, old_pte);
+		return -1;
 	}
 
 	va_offset = pa_offset;
@@ -198,4 +209,25 @@ uint32_t Emulator::V2P(uint32_t va, int mode){
 		ppn[0] = vpn[0];
 	pa = ppn[1] << 22 | ppn[0] << 12 | pa_offset;
 	return pa;
+
 }
+
+void Emulator::print_error(string error, int32_t va, int32_t a, int i, int32_t pte, int32_t old_pte){
+		cout << "page-fault exception : " << error << endl;
+		cout << showbase << hex ;
+		cout << "PC = "  << PC << endl;  
+		cout << "va = " << va << endl;
+	   	cout << "a = " << a << endl;
+		cout << "satp = "  << csr[satp] << endl;
+		cout << "i = " << i << endl;
+	    cout << "pte = " << pte  << endl;
+		if(i <= 0)
+	    	cout << "old_pte = " << old_pte << endl ;
+		cout << "get_phys_mem32(pte) = " << get_phys_mem32(pte) << endl ;
+		if(i <= 0)
+			cout << "get_phys_mem32(old_pte) = " << get_phys_mem32(old_pte) << endl ;
+		cout << dec;
+		dump_registers(0);
+		//cout << "simulation halted" << endl;
+}
+

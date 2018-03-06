@@ -3,10 +3,10 @@
 
 #include <stdint.h>
 
-#define CSR_CNT 20 + 1
+#define CSR_CNT 21 + 1
 
 //mimpidをexternal interrupt用のレジスタとして代用
-enum CSRs{mstatus = 1, medeleg, mideleg, mie, mtvec, mscratch, mepc, mcause, mip, sstatus, sedeleg, sideleg, sie, stvec, sscratch, sepc, scause, sip, satp, mimpid};
+enum CSRs{mstatus = 1, misa, medeleg, mideleg, mie, mtvec, mscratch, mepc, mcause, mip, sstatus, sedeleg, sideleg, sie, stvec, sscratch, sepc, scause, sip, satp, mimpid};
 int32_t num2csr(int32_t num, int8_t runlevel);
 
 #endif

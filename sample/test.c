@@ -1,59 +1,60 @@
-struct trapframe {
-  int ra;
-  int sp;
-  int gp;
-  int tp;
-  int t0;
-  int t1;
-  int t2;
-  int s0;
-  int s1;
-  /*
-  int a0;
-  int a1;
-  int a2;
-  int a3;
-  int a4;
-  int a5;
-  int a6;
-  int a7;
-  int s2;
-  int s3;
-  int s4;
-  int s5;
-  int s6;
-  int s7;
-  int s8;
-  int s9;
-  int s10;
-  int s11;
-  int t3;
-  int t4;
-  int t5;
-  int t6;
 
-  int mepc;
-  int mcause;
-  */
-  int mstatus;
-};
+#define RISCV
 
-int sum(struct trapframe);
+#ifndef RISCV
+#include <stdio.h>
+#endif
 
 int main(void)
 {
-	struct trapframe tf;
-	int ans;
-	tf.ra = 16;
-	tf.mstatus = 48;
-	ans = sum(tf);
-	return 0;
-}
+	int a[23];
+	int x=0x80001111;
+	int y=0b00111100;
+	a[0] = x + 0b00111100;
+	a[1] = x ^ 0b00111100;
+	a[2] = x & 0b00111100;
+	a[3] = x | 0b00111100;
+	a[4] = x << 2;
+	a[5] = x >> 2;
+	a[6] = (unsigned int)x >> 2;
+	a[7] = x + y;
+	a[8] = x - y;
+	a[9] = x ^ y;
+	a[10] = x & y;
+	a[11] = x | y;
+	a[12] = x << y;
+	a[13] = x >> y;
+	a[14] = (unsigned int)y >> 2;
+	a[15] = x > y;
+	a[16] = (unsigned int)x > (unsigned int)y;
+	int z = 0x00000001;
+	int w = 0x80000002;
+	if(z == w)	a[17] = 1;
+	else		a[17] = 0;
+	if(z != w)	a[18] = 1;
+	else		a[18] = 0;
+	if(z < w)	a[19] = 1;
+	else		a[19] = 0;
+	if(z >= w)	a[20] = 1;
+	else		a[20] = 0;
+	if((unsigned int)z > (unsigned int)w)	a[21] = 1;
+	else		a[21] = 0;
+	if((unsigned int)z > (unsigned int)w)	a[22] = 1;
+	else		a[22] = 0;
 
-int sum(struct trapframe tf){
-	int ans;
-	ans = tf.mstatus ;
-	return ans;
+#ifdef RISCV
+	int* addr = (int*)0xf00;
+	for(int i = 0; i < 23; i++){
+		*addr = a[i];
+		addr++;
+	}
+#else
+	for(int i = 0; i < 23; i++){
+		printf("a[%d] = %08x\n",i,a[i]);
+	}
+#endif
+	
+	return 0;
 }
 
 

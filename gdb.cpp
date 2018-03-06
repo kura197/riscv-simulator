@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <arpa/inet.h>
@@ -18,6 +19,7 @@
 using namespace std;
 
 DEFINE_int32(port, 20000, "gdb remote port");
+DEFINE_bool(p, false, "watch packets");
 
 
 rsp::rsp(Emulator* emu){
@@ -27,6 +29,9 @@ rsp::rsp(Emulator* emu){
 	sigval         =  0;		/* No exception */
 	start_addr     = STARTPC;	/* Default restart point */
 	stop = true;
+	attach = true;
+	tv.tv_sec = 0;
+	tv.tv_usec = 100;
 
 	gdb_emu = emu;
 }
@@ -64,11 +69,11 @@ void rsp::rsp_client_request (){
 		return;
 	}
 
-#if RSP_TRACE
-	//printf ("Packet received %s: %d chars\n", buf, buf.length());
-	cout << "Packet received " << buf << ": " << buf.length() << "chars" << endl;
-	fflush (stdout);
-#endif
+	if(FLAGS_p){
+		//printf ("Packet received %s: %d chars\n", buf, buf.length());
+		cout << "Packet received " << buf << ": " << buf.length() << "chars" << endl;
+		fflush (stdout);
+	}
 
 	switch (buf[0]){
 		case 'q':
@@ -110,6 +115,14 @@ void rsp::rsp_client_request (){
 			return;
 		case 's':
 			rsp_step (buf);
+			return;
+		case 'D':
+			put_str_packet ("OK");
+			rsp_client_close ();
+			attach = false;
+			stop = false;
+			//sigval = TARGET_SIGNAL_NONE;	/* No signal now */
+
 			return;
 	}
 }
@@ -223,6 +236,9 @@ int rsp::rsp_get_client(){
 	signal (SIGPIPE, SIG_IGN);		/* So we don't exit if client dies */
 
 	printf ("Remote debugging from host %s\n", inet_ntoa (sock_addr.sin_addr));
+
+	FD_ZERO(&readfd);
+	FD_SET(client_fd, &readfd);
 
 	return 0;
 
@@ -432,11 +448,11 @@ void rsp::put_packet (string buf){
 		unsigned char checksum = 0;	/* Computed checksum */
 		int           count    = 0;	/* Index into the buffer */
 
-#if RSP_TRACE
-		//printf ("Putting %s\n", buf);
-		cout << "Putting " << buf << endl;
-		fflush (stdout);
-#endif
+		if(FLAGS_p){
+			//printf ("Putting %s\n", buf);
+			cout << "Putting " << buf << endl;
+			fflush (stdout);
+		}
 		put_rsp_char ('$');		/* Start char */
 		/* Body of the packet */
 		for (count = 0; count < buf.length(); count++){
@@ -526,17 +542,41 @@ void rsp::rsp_read_reg(string buf){
 		reg2hex(gdb_emu->x[regnum], &reply);
 
 	else if(regnum == 0x20)
-		reg2hex(gdb_emu->get_PC(), &reply);
+		reg2hex(gdb_emu->PC, &reply);
 
 	else if(regnum == 0x1041)
-		reg2hex(gdb_emu->get_PC()-4, &reply);
-//??
+		reg2hex(gdb_emu->PC, &reply);
+//mstatus
+	else if(regnum == 0x341)
+		reg2hex(gdb_emu->csr[mstatus], &reply);
+//misa
 	else if(regnum == 0x342)
-		reg2hex(gdb_emu->get_PC(), &reply);
+		reg2hex(gdb_emu->csr[misa], &reply);
+//mtvec
+	else if(regnum == 0x345)
+		reg2hex(gdb_emu->csr[mie], &reply);
+//mtvec
+	else if(regnum == 0x346)
+		reg2hex(gdb_emu->csr[mtvec], &reply);
+//mscratch
+	else if(regnum == 0x381)
+		reg2hex(gdb_emu->csr[mscratch], &reply);
+//mepc
+	else if(regnum == 0x382)
+		reg2hex(gdb_emu->csr[mepc], &reply);
+//mcause
+	else if(regnum == 0x383)
+		reg2hex(gdb_emu->csr[mcause], &reply);
+//mip
+	else if(regnum == 0x385)
+		reg2hex(gdb_emu->csr[mip], &reply);
+//satp
+	else if(regnum == 0x1c1)
+		reg2hex(gdb_emu->csr[satp], &reply);
 
 //??
 	else if(regnum == 0xf51)
-		reg2hex(gdb_emu->get_PC(), &reply);
+		reg2hex(gdb_emu->PC, &reply);
 
 	else{
 		/* Error response if we don't know the register */
@@ -571,8 +611,7 @@ void rsp::rsp_read_mem (string buf){
 		unsigned char  ch;		/* The byte at the address */
 
 		/* Check memory area is valid */
-		if (addr + off > MEMSIZE)
-		{
+		if (gdb_emu->V2P(addr + off, -1) == -1){
 			/* The error number doesn't matter. The GDB client will substitute
 			   its own */
 			put_str_packet ("E01");
@@ -713,11 +752,11 @@ void rsp::rsp_continue (string buf){
 	unsigned long int  addr;		/* Address to continue from, if any */
 
 	if (0 == strcmp ("c", buf.c_str())){
-		addr = gdb_emu->get_PC();	/* Default uses current NPC */
+		addr = gdb_emu->PC;	/* Default uses current NPC */
 	}
 	else if (1 != sscanf (buf.c_str(), "c%lx", &addr)){
 		cout << "Warning: RSP continue address " << buf << "not recognized: ignored" << endl;
-		addr = gdb_emu->get_PC();	/* Default uses current NPC */
+		addr = gdb_emu->PC;	/* Default uses current NPC */
 	}
 
 	//rsp_continue_generic (addr, EXCEPT_NONE);
@@ -730,12 +769,12 @@ void rsp::rsp_step (string buf){
 
 	if (0 == strcmp ("s", buf.c_str()))
 	{
-		addr = gdb_emu->get_PC();	/* Default uses current NPC */
+		addr = gdb_emu->PC;	/* Default uses current NPC */
 	}
 	else if (1 != sscanf (buf.c_str(), "s%lx", &addr))
 	{
 		cout << "Warning: RSP step address " << buf << "not recognized: ignored" << endl;
-		addr = gdb_emu->get_PC();	/* Default uses current NPC */
+		addr = gdb_emu->PC;	/* Default uses current NPC */
 	}
 
 	//rsp_step_generic (addr, EXCEPT_NONE);
@@ -743,3 +782,33 @@ void rsp::rsp_step (string buf){
 	step = true;
 
 }	/* rsp_step () */
+
+int rsp::handle_interrupt_rsp(){
+	//static int instr_num = 0;
+	//instr_num++;
+	//if(instr_num != 100)
+	//	return -1;
+	//instr_num = 0;
+
+	if (-1 == client_fd){
+		fprintf (stderr, "Warning: Attempt to read from unopened RSP "
+				"client: Ignored\n");
+		return -1;
+	}
+	int ch;		
+
+	if((select(client_fd + 1, &readfd, NULL, NULL, &tv)) <= 0){
+		//fprintf(stderr,"\nTimeout\n");
+		return -1;
+	}
+
+	if(FD_ISSET(client_fd, &readfd)){
+		ch = get_rsp_char ();
+		if(ch == 0x03){
+			rsp_report_exception();
+			return 0;
+		}
+	}
+	return -1;
+	
+}

@@ -36,21 +36,28 @@ int main(int argc, char* argv[]){
 	rsp gdb(&emu);
 	init_instruction();
 	uint32_t instr;
-	while(emu.PC < MEMSIZE){
+	while(1){
 		interrupt(&emu);
-		if(FLAGS_g){
+		if(FLAGS_g && gdb.attach){
 			if(gdb.step){
 				gdb.stop = true;
 				gdb.step = false;
+				gdb.sigval = 5;
 				gdb.rsp_report_exception();
 			}else{
 				for(int x : gdb.bp){
 					if(emu.PC == x){
 						gdb.stop = true;
+						gdb.sigval = 5;
 						gdb.rsp_report_exception();
 						break;
 					}
 				}
+			}
+			if(gdb.handle_interrupt_rsp() == 0){
+				gdb.sigval = 5;
+				cout << "interrupt sygnal" << endl;
+				gdb.stop = 1;
 			}
 			while(gdb.stop){
 				gdb.handle_rsp();
@@ -64,7 +71,7 @@ int main(int argc, char* argv[]){
 			cout << endl;
 			emu.dump_registers(0);
 			//emu.dump_memory(0x10000,16);
-			printf("PC = %08x, Code = %08x, runlevel = %d\n",emu.get_PC()-4,instr,emu.runlevel);
+			printf("PC = %08x, Code = %08x, runlevel = %d\n",emu.PC-4,instr,emu.runlevel);
 		}
 		//instruction
 		decoder_t d;
@@ -73,8 +80,8 @@ int main(int argc, char* argv[]){
 		ioport(&emu, &binary);
 	}
 	emu.dump_registers(0);
-	printf("program ended successfully at PC = %08x\n", emu.get_PC()-4);
-	//emu.dump_memory(0x10000,0x20);
+	printf("program ended successfully at PC = %08x\n", emu.PC-4);
+	//emu.dump_memory(0xf00,0x65);
 
 	binary.close();
 	return 0;

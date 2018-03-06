@@ -59,6 +59,8 @@ errno.h
 -
 sys/types.h
 -
+sys/time.h
+-
 sys/socket.h
 -
 fcntl.h
@@ -88,6 +90,8 @@ iostream
 string
 -
 vector
+-
+sys/time.h
 -
 emulator.hpp
 /home/kura/Documents/risc-v_emu/emulator.hpp
