@@ -3,6 +3,7 @@
 
 #include<iostream>
 #include<fstream>
+#include <queue>
 #include "csr.hpp"
 #include "reg.h"
 using namespace std;
@@ -20,6 +21,8 @@ using namespace std;
 #define PAGESIZE 4096
 #define LEVELS 2
 #define PTESIZE 4
+
+#define IO_BASE 0xFE000000
 
 //MMU
 #define PAGE_X 0
@@ -43,8 +46,11 @@ class Emulator{
 	int32_t x[USER_REG_CNT];
 	int32_t csr[CSR_CNT];
 	uint8_t* memory;
+	uint8_t* io_mem;
 	uint32_t PC;
 	int8_t runlevel;
+	queue<char> uart_rx;
+	queue<char> uart_tx;
 
 
 	Emulator();

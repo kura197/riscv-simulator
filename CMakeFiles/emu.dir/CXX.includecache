@@ -41,6 +41,8 @@ iostream
 -
 fstream
 -
+queue
+-
 csr.hpp
 /home/kura/Documents/risc-v_emu/csr.hpp
 reg.h

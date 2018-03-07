@@ -467,12 +467,12 @@ void OP_SYSTEM(Emulator* emu, decoder_t d){
 }
 
 void OP_A(Emulator* emu, decoder_t d){
-	switch(d.funct7 & 0x7c){
+	switch((d.funct7 >> 2) & 0b11111){
 		//AMOSWAP.W
 		case 0b00001:
 			emu->x[d.rd] = emu->get_mem32(emu->x[d.rs1]);
 			emu->store_mem32(emu->x[d.rs1], emu->x[d.rs2]);
-			emu->x[d.rs2] = emu->x[d.rd];
+			//emu->x[d.rs2] = emu->x[d.rd];
 			break;
 		default:
 			cout << "error : OP_A/not yet implemented" << endl;

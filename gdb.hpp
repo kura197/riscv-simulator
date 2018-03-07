@@ -35,7 +35,6 @@ class rsp{
 	int                client_waiting;	/*!< Is client waiting a response? */
 	int                proto_num;		/*!< Number of the protocol used */
 	int                client_fd;		/*!< FD for talking to GDB */
-	unsigned long int  start_addr;	/*!< Start of last run */
 	Emulator *gdb_emu;
 	struct timeval tv;
 	fd_set readfd;

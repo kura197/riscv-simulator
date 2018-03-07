@@ -56,7 +56,7 @@ int main(int argc, char* argv[]){
 			}
 			if(gdb.handle_interrupt_rsp() == 0){
 				gdb.sigval = 5;
-				cout << "interrupt sygnal" << endl;
+				cout << "interrupt signal" << endl;
 				gdb.stop = 1;
 			}
 			while(gdb.stop){
@@ -94,16 +94,20 @@ void ioport(Emulator* emu, ifstream *binary){
 //0x1F4 - 0x1F7:	phisical address
 //0x1F8 - 0x1FB:	read address(offset)
 //0x1FC - 0x1FF:	read size
-	if(emu->memory[0x1F3] == 1){
-		emu->memory[0x1F3] = 0;
-		uint32_t pa = emu->get_mem32(0x1F4);
-		uint32_t offset = emu->get_mem32(0x1F8) * SECTSIZE;
-		uint32_t size = emu->get_mem32(0x1FC);
+	if(emu->get_mem8(IO_BASE+0x1F3) == 1){
+		emu-> store_mem8(IO_BASE+0x1F3, 0);
+		uint32_t pa = emu->get_mem32(IO_BASE+0x1F4);
+		uint32_t offset = emu->get_mem32(IO_BASE+0x1F8) * SECTSIZE;
+		uint32_t size = emu->get_mem32(IO_BASE+0x1FC);
 		if(FLAGS_d){
-			emu->dump_memory(0x1F4,12);
+			emu->dump_memory(IO_BASE+0x1F4,12);
 		}
 		emu->load_memory(binary, offset, pa, size);
 	}
+
+/* UART */
+//0x3F8	Write/Read
+//0x3F9 - 0x3FF	Reserved
 }
 
 

@@ -21,6 +21,7 @@ Emulator::Emulator(){
 	runlevel = M;
 	csr[misa] = 0x40001101;
 	memory = new uint8_t[MEMSIZE];
+	io_mem = new uint8_t[0 - IO_BASE];
 }
 
 Emulator::~Emulator(){
@@ -77,41 +78,91 @@ void Emulator::dump_registers(int num){
 
 void Emulator::dump_memory(int32_t start_addr, size_t limit){
 	int i, k;
-	for(i = start_addr,k = 0;i < start_addr + limit; i++, k++){
-		if(k % DUMP_ROW == 0)	printf("\n");
-		printf("%08x:%02x	",i,memory[i]);
+	if(start_addr >= IO_BASE){
+		start_addr = start_addr - IO_BASE;
+		for(i = start_addr,k = 0;i < start_addr + limit; i++, k++){
+			if(k % DUMP_ROW == 0)	printf("\n");
+			printf("%08x:%02x	",i,memory[i]);
+		}
+		printf("\n");
+	}else{
+		for(i = start_addr,k = 0;i < start_addr + limit; i++, k++){
+			if(k % DUMP_ROW == 0)	printf("\n");
+			printf("%08x:%02x	",i,memory[i]);
+		}
+		printf("\n");
 	}
-	printf("\n");
 }
 
 int32_t Emulator::get_mem32(uint32_t addr){
-	return (memory[V2P(addr+3, PAGE_R)] << 24)|(memory[V2P(addr+2, PAGE_R)] << 16)|(memory[V2P(addr+1, PAGE_R)] << 8)|(memory[V2P(addr, PAGE_R)]);
+	if(addr >= IO_BASE){
+		addr = addr - IO_BASE;
+		return (io_mem[addr+3] << 24)|(io_mem[addr+2] << 16)|(io_mem[addr+1] << 8)|(io_mem[addr]);
+	}else
+		return (memory[V2P(addr+3, PAGE_R)] << 24)|(memory[V2P(addr+2, PAGE_R)] << 16)|(memory[V2P(addr+1, PAGE_R)] << 8)|(memory[V2P(addr, PAGE_R)]);
 }
 
 int16_t Emulator::get_mem16(uint32_t addr){
-	return (memory[V2P(addr+1, PAGE_R)] << 8)|(memory[V2P(addr, PAGE_R)]);
+	if(addr >= IO_BASE){
+		addr = addr - IO_BASE;
+		return (io_mem[addr+1] << 8)|(io_mem[addr]);
+	}else
+		return (memory[V2P(addr+1, PAGE_R)] << 8)|(memory[V2P(addr, PAGE_R)]);
 }
 
 int8_t Emulator::get_mem8(uint32_t addr){
-	return memory[V2P(addr, PAGE_R)];
+	if(addr >= IO_BASE){
+		addr = addr - IO_BASE;
+		//UART
+		if(addr == 0x3F8){
+			int8_t uart = uart_rx.front();
+			uart_rx.pop();
+			return uart;
+		}else
+			return io_mem[addr];
+	}else
+		return memory[V2P(addr, PAGE_R)];
 }
 
 void Emulator::store_mem32(uint32_t addr, int32_t value){
-	for(int i = 0; i < 4; i++){
-		memory[V2P(addr, PAGE_W)] = (value >> 8*i & 0xff);
-		addr++;
-	}
+	if(addr >= IO_BASE){
+		addr = addr - IO_BASE;
+		for(int i = 0; i < 4; i++){
+			io_mem[addr] = ((value >> 8*i) & 0xff);
+			addr++;
+		}
+	}else
+		for(int i = 0; i < 4; i++){
+			memory[V2P(addr, PAGE_W)] = (value >> 8*i & 0xff);
+			addr++;
+		}
 }
 
 void Emulator::store_mem16(uint32_t addr, int16_t value){
-	for(int i = 0; i < 2; i++){
-		memory[V2P(addr, PAGE_W)] = (value >> 8*i & 0xff);
-		addr++;
-	}
+	if(addr >= IO_BASE){
+		addr = addr - IO_BASE;
+		for(int i = 0; i < 2; i++){
+			io_mem[addr] = ((value >> 8*i) & 0xff);
+			addr++;
+		}
+	}else
+		for(int i = 0; i < 2; i++){
+			memory[V2P(addr, PAGE_W)] = ((value >> 8*i) & 0xff);
+			addr++;
+		}
 }
 
 void Emulator::store_mem8(uint32_t addr, int8_t value){
-	memory[V2P(addr, PAGE_W)] = value;
+	if(addr >= IO_BASE){
+		addr = addr - IO_BASE;
+		//UART
+		if(addr == 0x3F8)
+			//uart_tx.push(value);
+			printf("%c",value);
+		else
+			io_mem[addr] = value;
+	}else
+		memory[V2P(addr, PAGE_W)] = value;
 }
 
 //mimpic(external interrupt)
@@ -125,7 +176,11 @@ void Emulator::set_exinterrupt(int8_t num){
 }
 
 int32_t Emulator::get_phys_mem32(int32_t addr){
-	return (memory[addr+3] << 24)|(memory[addr+2] << 16)|(memory[addr+1] << 8)|memory[addr];
+	if(addr >= IO_BASE){
+		addr = addr - IO_BASE;
+		return (io_mem[addr+3] << 24)|(io_mem[addr+2] << 16)|(io_mem[addr+1] << 8)|io_mem[addr];
+	}else
+		return (memory[addr+3] << 24)|(memory[addr+2] << 16)|(memory[addr+1] << 8)|memory[addr];
 }
 
 uint32_t Emulator::V2P(uint32_t va, int mode){

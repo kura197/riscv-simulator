@@ -27,11 +27,10 @@ rsp::rsp(Emulator* emu){
 	client_waiting =  0;		/* GDB client is not waiting for us */
 	client_fd      = -1;		/* i.e. invalid */
 	sigval         =  0;		/* No exception */
-	start_addr     = STARTPC;	/* Default restart point */
 	stop = true;
 	attach = true;
 	tv.tv_sec = 0;
-	tv.tv_usec = 100;
+	tv.tv_usec = 20;
 
 	gdb_emu = emu;
 }
@@ -784,11 +783,11 @@ void rsp::rsp_step (string buf){
 }	/* rsp_step () */
 
 int rsp::handle_interrupt_rsp(){
-	//static int instr_num = 0;
-	//instr_num++;
-	//if(instr_num != 100)
-	//	return -1;
-	//instr_num = 0;
+	static int instr_num = 0;
+	instr_num++;
+	if(instr_num != 1000)
+		return -1;
+	instr_num = 0;
 
 	if (-1 == client_fd){
 		fprintf (stderr, "Warning: Attempt to read from unopened RSP "
@@ -796,8 +795,10 @@ int rsp::handle_interrupt_rsp(){
 		return -1;
 	}
 	int ch;		
+	FD_ZERO(&readfd);
+	FD_SET(client_fd, &readfd);
 
-	if((select(client_fd + 1, &readfd, NULL, NULL, &tv)) <= 0){
+	if((select(client_fd+1, &readfd, NULL, NULL, &tv)) <= 0){
 		//fprintf(stderr,"\nTimeout\n");
 		return -1;
 	}
