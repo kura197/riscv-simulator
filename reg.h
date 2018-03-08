@@ -56,7 +56,7 @@
 #define MEIE(x) ((x >> 11) & 1)
 
 //xtvec
-#define BASE(x) (x >> 2)
+#define BASE(x) (x & ~0b11)
 #define TVEC_MODE(x) (x & 0b11)
 
 

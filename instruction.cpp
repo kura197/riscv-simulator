@@ -410,13 +410,12 @@ void OP_SYSTEM(Emulator* emu, decoder_t d){
 				emu->csr[mcause] = ex_code;
 				//PC should be PC - 4
 				emu->csr[mepc] = emu->V2P(emu->PC, -1);
-				emu->PC = BASE(emu->csr[mtvec]);
+				emu->PC = emu->get_mem32(BASE(emu->csr[mtvec]));
 				emu->csr[mstatus] |= MIE(emu->csr[mstatus]) << 7 ;
 				//disable interrupt ??
 				emu->csr[mstatus] &= 0xfffffff7;
 				emu->csr[mstatus] |= emu->runlevel << 11 ;
 				emu->runlevel = M;
-
 				//MRET
 			}else if(d.funct7 == 0x302 && d.rs1 == 0 && d.rd == 0){
 				emu->PC = emu->csr[mepc];

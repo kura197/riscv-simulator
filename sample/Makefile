@@ -1,4 +1,4 @@
-CC = riscv32-unknown-linux-gnu-gcc 
+CC = riscv32-unknown-linux-gnu-gcc -O2
 AS = riscv32-unknown-linux-gnu-as
 LD = riscv32-unknown-linux-gnu-ld
 OBJCOPY = riscv32-unknown-linux-gnu-objcopy
