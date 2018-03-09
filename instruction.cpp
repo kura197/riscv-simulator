@@ -408,16 +408,20 @@ void OP_SYSTEM(Emulator* emu, decoder_t d){
 			if(d.funct7 == 0 && d.rs1 == 0 && d.rd == 0){
 				int32_t ex_code = (emu->runlevel == U) ? 8 : 11;
 				emu->csr[mcause] = ex_code;
+				emu->csr[mstatus] |= emu->runlevel << 11 ;
+				emu->runlevel = M;
 				//PC should be PC - 4
-				emu->csr[mepc] = emu->V2P(emu->PC, -1);
+				//emu->csr[mepc] = emu->V2P(emu->PC, -1);
+				emu->csr[mepc] = emu->PC;
 				emu->PC = emu->get_mem32(BASE(emu->csr[mtvec]));
 				emu->csr[mstatus] |= MIE(emu->csr[mstatus]) << 7 ;
 				//disable interrupt ??
 				emu->csr[mstatus] &= 0xfffffff7;
-				emu->csr[mstatus] |= emu->runlevel << 11 ;
-				emu->runlevel = M;
+				//int32_t tmp = emu->x[2];
+				//emu->x[2] = emu->csr[mscratch];
+				//emu->csr[mscratch] = tmp;
 				//MRET
-			}else if(d.funct7 == 0x302 && d.rs1 == 0 && d.rd == 0){
+			}else if(d.funct7 == 0x18 && d.rs1 == 0 && d.rd == 0){
 				emu->PC = emu->csr[mepc];
 				emu->runlevel = MPP(emu->csr[mstatus]);
 				//MPP(emu->csr[mcause]) = U;
@@ -426,6 +430,9 @@ void OP_SYSTEM(Emulator* emu, decoder_t d){
 				emu->csr[mstatus] |= U << 11 ;
 				emu->csr[mstatus] |= MPIE(emu->csr[mstatus]) << 3 ;
 				emu->csr[mstatus] |= 1 << 7;
+				//int32_t tmp = emu->x[2];
+				//emu->x[2] = emu->csr[mscratch];
+				//emu->csr[mscratch] = tmp;
 			}else{
 				cout << "error : SYSTEM_OP/funct3 == 000" << endl;
 			}
