@@ -29,7 +29,7 @@ void interrupt(Emulator* emu){
 				if((n = read(0, &ch, sizeof(ch))) > 0){
 					emu->store_mem8(IO_BASE+COM1, ch);
 					emu->csr[mip] |= (1 << 11);
-					printf("kbd : %c\n",ch);
+					//printf("kbd : %c\n",ch);
 				}
 			}
 		}
@@ -91,18 +91,18 @@ void check_interrupt(Emulator* emu, int8_t runlevel, int32_t mideleg, int32_t mi
 		if(interrupt){
 			//external interrupt
 			if(ex_code == 11 || ex_code == 8){
-				emu->csr[mcause] = 0x8000000 | ex_code;
+				emu->csr[mcause] = 0x80000000 | ex_code;
 				//emu->csr[mepc] = emu->V2P(emu->PC, -1);
 				emu->csr[mepc] = emu->PC;
-				emu->PC = (TVEC_MODE(emu->csr[mtvec]) == 0) ? BASE(emu->csr[mtvec]) : BASE(emu->csr[mtvec]) + 4*emu->read_exinterrupt();
+				emu->PC = (TVEC_MODE(emu->csr[mtvec]) == 0) ? emu->get_mem32(BASE(emu->csr[mtvec])) : emu->get_mem32(BASE(emu->csr[mtvec]) + 4*emu->read_exinterrupt());
 				emu->csr[mstatus] |= MIE(emu->csr[mstatus]) << 7 ;
 				emu->csr[mstatus] &= 0xfffffff7;
 				emu->csr[mstatus] |= old_runlevel << 11 ;
 
 			}else{
-				emu->csr[mcause] = 0x8000000 | ex_code;
+				emu->csr[mcause] = 0x80000000 | ex_code;
 				emu->csr[mepc] = emu->V2P(emu->PC, -1);
-				emu->PC = (TVEC_MODE(emu->csr[mtvec]) == 0) ? BASE(emu->csr[mtvec]) : BASE(emu->csr[mtvec]) + 4*ex_code;
+				emu->PC = (TVEC_MODE(emu->csr[mtvec]) == 0) ? emu->get_mem32(BASE(emu->csr[mtvec])) : emu->get_mem32(BASE(emu->csr[mtvec]) + 4*ex_code);
 				//MPIE(emu->csr[mstatus]) = MIE(emu->csr[mstatus]);
 				//MIE(emu->csr[mstatus]) = 0;
 				//MPP(emu->csr[mstatus]) = old_runlevel;

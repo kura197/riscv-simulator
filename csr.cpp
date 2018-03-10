@@ -60,6 +60,18 @@ int32_t num2csr(int32_t num, int8_t runlevel){
 				return mcause;
 			else
 				return 0;
+		////mtval  
+		//case 0x343:
+		//	if(runlevel > 2)
+		//		return mtval;
+		//	else
+		//		return 0;
+		//mip  
+		case 0x344:
+			if(runlevel > 2)
+				return mip;
+			else
+				return 0;
 
 //SuperViser//
 		//sstatus  
