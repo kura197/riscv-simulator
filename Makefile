@@ -231,6 +231,33 @@ instruction.cpp.s:
 	$(MAKE) -f CMakeFiles/emu.dir/build.make CMakeFiles/emu.dir/instruction.cpp.s
 .PHONY : instruction.cpp.s
 
+intr.o: intr.cpp.o
+
+.PHONY : intr.o
+
+# target to build an object file
+intr.cpp.o:
+	$(MAKE) -f CMakeFiles/emu.dir/build.make CMakeFiles/emu.dir/intr.cpp.o
+.PHONY : intr.cpp.o
+
+intr.i: intr.cpp.i
+
+.PHONY : intr.i
+
+# target to preprocess a source file
+intr.cpp.i:
+	$(MAKE) -f CMakeFiles/emu.dir/build.make CMakeFiles/emu.dir/intr.cpp.i
+.PHONY : intr.cpp.i
+
+intr.s: intr.cpp.s
+
+.PHONY : intr.s
+
+# target to generate assembly for a file
+intr.cpp.s:
+	$(MAKE) -f CMakeFiles/emu.dir/build.make CMakeFiles/emu.dir/intr.cpp.s
+.PHONY : intr.cpp.s
+
 main.o: main.cpp.o
 
 .PHONY : main.o
@@ -258,33 +285,6 @@ main.cpp.s:
 	$(MAKE) -f CMakeFiles/emu.dir/build.make CMakeFiles/emu.dir/main.cpp.s
 .PHONY : main.cpp.s
 
-trap.o: trap.cpp.o
-
-.PHONY : trap.o
-
-# target to build an object file
-trap.cpp.o:
-	$(MAKE) -f CMakeFiles/emu.dir/build.make CMakeFiles/emu.dir/trap.cpp.o
-.PHONY : trap.cpp.o
-
-trap.i: trap.cpp.i
-
-.PHONY : trap.i
-
-# target to preprocess a source file
-trap.cpp.i:
-	$(MAKE) -f CMakeFiles/emu.dir/build.make CMakeFiles/emu.dir/trap.cpp.i
-.PHONY : trap.cpp.i
-
-trap.s: trap.cpp.s
-
-.PHONY : trap.s
-
-# target to generate assembly for a file
-trap.cpp.s:
-	$(MAKE) -f CMakeFiles/emu.dir/build.make CMakeFiles/emu.dir/trap.cpp.s
-.PHONY : trap.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -306,12 +306,12 @@ help:
 	@echo "... instruction.o"
 	@echo "... instruction.i"
 	@echo "... instruction.s"
+	@echo "... intr.o"
+	@echo "... intr.i"
+	@echo "... intr.s"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
-	@echo "... trap.o"
-	@echo "... trap.i"
-	@echo "... trap.s"
 .PHONY : help
 
 

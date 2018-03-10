@@ -2,7 +2,7 @@ file(REMOVE_RECURSE
   "CMakeFiles/emu.dir/main.cpp.o"
   "CMakeFiles/emu.dir/instruction.cpp.o"
   "CMakeFiles/emu.dir/csr.cpp.o"
-  "CMakeFiles/emu.dir/trap.cpp.o"
+  "CMakeFiles/emu.dir/intr.cpp.o"
   "CMakeFiles/emu.dir/emulator.cpp.o"
   "CMakeFiles/emu.dir/gdb.cpp.o"
   "emu.pdb"

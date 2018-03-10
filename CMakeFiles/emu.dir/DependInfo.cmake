@@ -8,8 +8,8 @@ set(CMAKE_DEPENDS_CHECK_CXX
   "/home/kura/Documents/risc-v_emu/emulator.cpp" "/home/kura/Documents/risc-v_emu/CMakeFiles/emu.dir/emulator.cpp.o"
   "/home/kura/Documents/risc-v_emu/gdb.cpp" "/home/kura/Documents/risc-v_emu/CMakeFiles/emu.dir/gdb.cpp.o"
   "/home/kura/Documents/risc-v_emu/instruction.cpp" "/home/kura/Documents/risc-v_emu/CMakeFiles/emu.dir/instruction.cpp.o"
+  "/home/kura/Documents/risc-v_emu/intr.cpp" "/home/kura/Documents/risc-v_emu/CMakeFiles/emu.dir/intr.cpp.o"
   "/home/kura/Documents/risc-v_emu/main.cpp" "/home/kura/Documents/risc-v_emu/CMakeFiles/emu.dir/main.cpp.o"
-  "/home/kura/Documents/risc-v_emu/trap.cpp" "/home/kura/Documents/risc-v_emu/CMakeFiles/emu.dir/trap.cpp.o"
   )
 set(CMAKE_CXX_COMPILER_ID "GNU")
 

@@ -129,28 +129,28 @@ CMakeFiles/emu.dir/csr.cpp.o.provides: CMakeFiles/emu.dir/csr.cpp.o.requires
 CMakeFiles/emu.dir/csr.cpp.o.provides.build: CMakeFiles/emu.dir/csr.cpp.o
 
 
-CMakeFiles/emu.dir/trap.cpp.o: CMakeFiles/emu.dir/flags.make
-CMakeFiles/emu.dir/trap.cpp.o: trap.cpp
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/kura/Documents/risc-v_emu/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/emu.dir/trap.cpp.o"
-	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/emu.dir/trap.cpp.o -c /home/kura/Documents/risc-v_emu/trap.cpp
+CMakeFiles/emu.dir/intr.cpp.o: CMakeFiles/emu.dir/flags.make
+CMakeFiles/emu.dir/intr.cpp.o: intr.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/kura/Documents/risc-v_emu/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/emu.dir/intr.cpp.o"
+	/usr/bin/c++  $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -o CMakeFiles/emu.dir/intr.cpp.o -c /home/kura/Documents/risc-v_emu/intr.cpp
 
-CMakeFiles/emu.dir/trap.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/emu.dir/trap.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kura/Documents/risc-v_emu/trap.cpp > CMakeFiles/emu.dir/trap.cpp.i
+CMakeFiles/emu.dir/intr.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/emu.dir/intr.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kura/Documents/risc-v_emu/intr.cpp > CMakeFiles/emu.dir/intr.cpp.i
 
-CMakeFiles/emu.dir/trap.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/emu.dir/trap.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kura/Documents/risc-v_emu/trap.cpp -o CMakeFiles/emu.dir/trap.cpp.s
+CMakeFiles/emu.dir/intr.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/emu.dir/intr.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kura/Documents/risc-v_emu/intr.cpp -o CMakeFiles/emu.dir/intr.cpp.s
 
-CMakeFiles/emu.dir/trap.cpp.o.requires:
+CMakeFiles/emu.dir/intr.cpp.o.requires:
 
-.PHONY : CMakeFiles/emu.dir/trap.cpp.o.requires
+.PHONY : CMakeFiles/emu.dir/intr.cpp.o.requires
 
-CMakeFiles/emu.dir/trap.cpp.o.provides: CMakeFiles/emu.dir/trap.cpp.o.requires
-	$(MAKE) -f CMakeFiles/emu.dir/build.make CMakeFiles/emu.dir/trap.cpp.o.provides.build
-.PHONY : CMakeFiles/emu.dir/trap.cpp.o.provides
+CMakeFiles/emu.dir/intr.cpp.o.provides: CMakeFiles/emu.dir/intr.cpp.o.requires
+	$(MAKE) -f CMakeFiles/emu.dir/build.make CMakeFiles/emu.dir/intr.cpp.o.provides.build
+.PHONY : CMakeFiles/emu.dir/intr.cpp.o.provides
 
-CMakeFiles/emu.dir/trap.cpp.o.provides.build: CMakeFiles/emu.dir/trap.cpp.o
+CMakeFiles/emu.dir/intr.cpp.o.provides.build: CMakeFiles/emu.dir/intr.cpp.o
 
 
 CMakeFiles/emu.dir/emulator.cpp.o: CMakeFiles/emu.dir/flags.make
@@ -206,7 +206,7 @@ emu_OBJECTS = \
 "CMakeFiles/emu.dir/main.cpp.o" \
 "CMakeFiles/emu.dir/instruction.cpp.o" \
 "CMakeFiles/emu.dir/csr.cpp.o" \
-"CMakeFiles/emu.dir/trap.cpp.o" \
+"CMakeFiles/emu.dir/intr.cpp.o" \
 "CMakeFiles/emu.dir/emulator.cpp.o" \
 "CMakeFiles/emu.dir/gdb.cpp.o"
 
@@ -216,7 +216,7 @@ emu_EXTERNAL_OBJECTS =
 emu: CMakeFiles/emu.dir/main.cpp.o
 emu: CMakeFiles/emu.dir/instruction.cpp.o
 emu: CMakeFiles/emu.dir/csr.cpp.o
-emu: CMakeFiles/emu.dir/trap.cpp.o
+emu: CMakeFiles/emu.dir/intr.cpp.o
 emu: CMakeFiles/emu.dir/emulator.cpp.o
 emu: CMakeFiles/emu.dir/gdb.cpp.o
 emu: CMakeFiles/emu.dir/build.make
@@ -233,7 +233,7 @@ CMakeFiles/emu.dir/build: emu
 CMakeFiles/emu.dir/requires: CMakeFiles/emu.dir/main.cpp.o.requires
 CMakeFiles/emu.dir/requires: CMakeFiles/emu.dir/instruction.cpp.o.requires
 CMakeFiles/emu.dir/requires: CMakeFiles/emu.dir/csr.cpp.o.requires
-CMakeFiles/emu.dir/requires: CMakeFiles/emu.dir/trap.cpp.o.requires
+CMakeFiles/emu.dir/requires: CMakeFiles/emu.dir/intr.cpp.o.requires
 CMakeFiles/emu.dir/requires: CMakeFiles/emu.dir/emulator.cpp.o.requires
 CMakeFiles/emu.dir/requires: CMakeFiles/emu.dir/gdb.cpp.o.requires
 

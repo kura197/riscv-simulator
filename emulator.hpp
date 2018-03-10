@@ -4,6 +4,9 @@
 #include<iostream>
 #include<fstream>
 #include <queue>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <unistd.h>
 #include "csr.hpp"
 #include "reg.h"
 using namespace std;
@@ -23,7 +26,13 @@ using namespace std;
 #define PTESIZE 4
 
 #define IO_BASE 0xFE000000
+#define COM1 0x3F8
+#define MTIME_L 0x500
+#define MTIME_H 0x504
+#define MTIMECMP_L 0x508
+#define MTIMECMP_H 0x50c
 
+#define CYCLE 5
 //MMU
 #define PAGE_X 0
 #define PAGE_W 1
@@ -51,6 +60,9 @@ class Emulator{
 	int8_t runlevel;
 	queue<char> uart_rx;
 	queue<char> uart_tx;
+	fd_set kbd_fd;
+	uint64_t mtime;
+	uint64_t mtimecmp;
 
 
 	Emulator();

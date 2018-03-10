@@ -3,7 +3,7 @@
 #include <fstream>
 #include "emulator.hpp"
 #include "instruction.hpp"
-#include "trap.hpp"
+#include "intr.hpp"
 #include <gflags/gflags.h>
 #include "gdb.hpp"
 

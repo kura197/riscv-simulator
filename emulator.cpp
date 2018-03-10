@@ -53,6 +53,8 @@ uint32_t Emulator::fetch(){
 	instr = (memory[V2P(PC+3, PAGE_X)] << 24)|(memory[V2P(PC+2, PAGE_X)] << 16)|(memory[V2P(PC+1, PAGE_X)] << 8)|(memory[V2P(PC, PAGE_X)]);
 	x[0] = 0;
 	PC += 4;
+
+	mtime += CYCLE;
 	return instr;
 }
 
@@ -114,7 +116,7 @@ int8_t Emulator::get_mem8(uint32_t addr){
 	if(addr >= IO_BASE){
 		addr = addr - IO_BASE;
 		//UART
-		if(addr == 0x3F8){
+		if(addr == COM1){
 			int8_t uart = uart_rx.front();
 			uart_rx.pop();
 			return uart;
@@ -127,6 +129,24 @@ int8_t Emulator::get_mem8(uint32_t addr){
 void Emulator::store_mem32(uint32_t addr, int32_t value){
 	if(addr >= IO_BASE){
 		addr = addr - IO_BASE;
+		switch(addr){
+			case MTIME_L:
+				mtime &= ~0xffffffff;
+				mtime |= value;
+				break;
+			case MTIME_H:
+				mtime &= 0xffffffff;
+				mtime |= (uint64_t)value << 32;
+				break;
+			case MTIMECMP_L:
+				mtimecmp &= ~0xffffffff;
+				mtimecmp |= value;
+				break;
+			case MTIMECMP_H:
+				mtimecmp &= 0xffffffff;
+				mtimecmp |= (uint64_t)value << 32;
+				break;
+		}
 		for(int i = 0; i < 4; i++){
 			io_mem[addr] = ((value >> 8*i) & 0xff);
 			addr++;
@@ -156,7 +176,7 @@ void Emulator::store_mem8(uint32_t addr, int8_t value){
 	if(addr >= IO_BASE){
 		addr = addr - IO_BASE;
 		//UART
-		if(addr == 0x3F8)
+		if(addr == COM1)
 			//uart_tx.push(value);
 			printf("%c",value);
 		else

@@ -21,17 +21,17 @@ CMakeFiles/emu.dir/instruction.cpp.o: instruction.cpp
 CMakeFiles/emu.dir/instruction.cpp.o: instruction.hpp
 CMakeFiles/emu.dir/instruction.cpp.o: reg.h
 
+CMakeFiles/emu.dir/intr.cpp.o: csr.hpp
+CMakeFiles/emu.dir/intr.cpp.o: emulator.hpp
+CMakeFiles/emu.dir/intr.cpp.o: intr.cpp
+CMakeFiles/emu.dir/intr.cpp.o: intr.hpp
+CMakeFiles/emu.dir/intr.cpp.o: reg.h
+
 CMakeFiles/emu.dir/main.cpp.o: csr.hpp
 CMakeFiles/emu.dir/main.cpp.o: emulator.hpp
 CMakeFiles/emu.dir/main.cpp.o: gdb.hpp
 CMakeFiles/emu.dir/main.cpp.o: instruction.hpp
+CMakeFiles/emu.dir/main.cpp.o: intr.hpp
 CMakeFiles/emu.dir/main.cpp.o: main.cpp
 CMakeFiles/emu.dir/main.cpp.o: reg.h
-CMakeFiles/emu.dir/main.cpp.o: trap.hpp
-
-CMakeFiles/emu.dir/trap.cpp.o: csr.hpp
-CMakeFiles/emu.dir/trap.cpp.o: emulator.hpp
-CMakeFiles/emu.dir/trap.cpp.o: reg.h
-CMakeFiles/emu.dir/trap.cpp.o: trap.cpp
-CMakeFiles/emu.dir/trap.cpp.o: trap.hpp
 
