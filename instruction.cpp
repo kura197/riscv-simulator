@@ -161,7 +161,7 @@ void OP_B(Emulator* emu, decoder_t d){
 			break;
 		//BGEU
 		case 0b111:
-			if((uint32_t)emu->x[d.rs1] > (uint32_t)emu->x[d.rs2])
+			if((uint32_t)emu->x[d.rs1] >= (uint32_t)emu->x[d.rs2])
 				emu->PC += d.imm - 4;
 			break;
 		default:

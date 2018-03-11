@@ -1,11 +1,8 @@
 
 int main(){
-	char *s, *ep;
-	char str[] = "init";
-	ep = str + 100;
-	for(s = str; s < ep; s++){
-		if(*s == 0)
-			return (s - str);
+	int a=15;
+	if(a != 14 && a != 13 && a != 12){
+		a++;
 	}
 	return -1;
 }

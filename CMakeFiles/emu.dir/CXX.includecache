@@ -141,6 +141,8 @@ unistd.h
 -
 iostream
 -
+queue
+-
 
 /home/kura/Documents/risc-v_emu/intr.hpp
 emulator.hpp

@@ -6,6 +6,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <iostream>
+#include <queue>
 
 using namespace std;
 
@@ -16,7 +17,7 @@ void interrupt(Emulator* emu){
 	if(cnt++ > 100000){
 		cnt = 0;
 
-		char ch;		
+		int8_t ch;		
 		int n;
 		struct timeval tv;
 		tv.tv_sec = 0;
@@ -29,9 +30,9 @@ void interrupt(Emulator* emu){
 				if((n = read(0, &ch, sizeof(ch))) > 0){
 				//if((ch = getchar()) >= 0){
 					//emu->store_mem8(IO_BASE+COM1, ch);
-					emu->uart_rx.push(ch);
 					emu->csr[mip] |= (1 << 11);
-					//printf("kbd : %c\n",ch);
+					emu->uart_rx.push(ch);
+					//printf("kbd : %c, buf:%d\n",ch, emu->uart_rx.empty());
 				}
 			}
 		}

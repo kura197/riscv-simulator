@@ -22,6 +22,7 @@ Emulator::Emulator(){
 	csr[misa] = 0x40001101;
 	memory = new uint8_t[MEMSIZE];
 	io_mem = new uint8_t[0 - IO_BASE];
+	uart_rx.push(0);
 }
 
 Emulator::~Emulator(){

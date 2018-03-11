@@ -58,8 +58,8 @@ class Emulator{
 	uint8_t* io_mem;
 	uint32_t PC;
 	int8_t runlevel;
-	queue<char> uart_rx;
-	queue<char> uart_tx;
+	queue<int8_t> uart_rx;
+	queue<int8_t> uart_tx;
 	fd_set kbd_fd;
 	uint64_t mtime;
 	uint64_t mtimecmp;
