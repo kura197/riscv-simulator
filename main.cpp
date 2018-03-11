@@ -56,7 +56,7 @@ int main(int argc, char* argv[]){
 			}
 			if(gdb.handle_interrupt_rsp() == 0){
 				gdb.sigval = 5;
-				cout << "interrupt signal" << endl;
+				//cout << "interrupt signal" << endl;
 				gdb.stop = 1;
 			}
 			while(gdb.stop){
@@ -107,7 +107,14 @@ void ioport(Emulator* emu, ifstream *binary){
 
 /* UART */
 //0x3F8	Write/Read
+//0x3f8+5:buffer empty flag
 //0x3F9 - 0x3FF	Reserved
+	if(!emu->uart_tx.empty()){
+		char ch = emu->uart_tx.front();
+		emu->uart_tx.pop();
+		printf("%c",ch);
+		fflush(stdout);
+	}
 }
 
 

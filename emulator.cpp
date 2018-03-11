@@ -179,10 +179,11 @@ void Emulator::store_mem8(uint32_t addr, int8_t value){
 	if(addr >= IO_BASE){
 		addr = addr - IO_BASE;
 		//UART
-		if(addr == COM1)
-			//uart_tx.push(value);
-			printf("%c",value);
-		else
+		if(addr == COM1){
+			uart_tx.push(value);
+			//printf("%c",value);
+			//fflush(stdout);
+		}else
 			io_mem[addr] = value;
 	}else
 		memory[V2P(addr, PAGE_W)] = value;

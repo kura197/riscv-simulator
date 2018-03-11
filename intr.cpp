@@ -27,7 +27,9 @@ void interrupt(Emulator* emu){
 		if((select(1, &emu->kbd_fd, NULL, NULL, &tv)) > 0){
 			if(FD_ISSET(0, &emu->kbd_fd)){
 				if((n = read(0, &ch, sizeof(ch))) > 0){
-					emu->store_mem8(IO_BASE+COM1, ch);
+				//if((ch = getchar()) >= 0){
+					//emu->store_mem8(IO_BASE+COM1, ch);
+					emu->uart_rx.push(ch);
 					emu->csr[mip] |= (1 << 11);
 					//printf("kbd : %c\n",ch);
 				}
