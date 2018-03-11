@@ -120,6 +120,9 @@ int8_t Emulator::get_mem8(uint32_t addr){
 			int8_t uart = uart_rx.front();
 			uart_rx.pop();
 			return uart;
+		}else if(addr == COM1+5){
+			int8_t LSR = (uart_rx.empty()) ? 0x0 : 0x01;
+			return LSR;
 		}else
 			return io_mem[addr];
 	}else
