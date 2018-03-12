@@ -165,6 +165,8 @@ gflags/gflags.h
 -
 gdb.hpp
 /home/kura/Documents/risc-v_emu/gdb.hpp
+termios.h
+-
 
 /home/kura/Documents/risc-v_emu/reg.h
 

@@ -6,6 +6,7 @@
 #include "intr.hpp"
 #include <gflags/gflags.h>
 #include "gdb.hpp"
+#include <termios.h>
 
 #define SECTSIZE 512
 
@@ -36,7 +37,16 @@ int main(int argc, char* argv[]){
 	rsp gdb(&emu);
 	init_instruction();
 	uint32_t instr;
+	struct termios term;
+	struct termios save;
+	tcgetattr(STDIN_FILENO, &term);
+	save = term;
+	term.c_lflag &= ~ECHO;
+	term.c_lflag &= ~ICANON;
+	tcsetattr(STDIN_FILENO, TCSANOW, &term);
 	while(1){
+		fflush(stdin);
+		fflush(stdout);
 		interrupt(&emu);
 		if(FLAGS_g && gdb.attach){
 			if(gdb.step){
@@ -84,6 +94,7 @@ int main(int argc, char* argv[]){
 	//emu.dump_memory(0xf00,0x65);
 
 	binary.close();
+	tcsetattr(STDIN_FILENO, TCSANOW, &save);
 	return 0;
 }
 
