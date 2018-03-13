@@ -15,7 +15,7 @@ using namespace std;
 #define NUM_REGS (USER_REG_CNT + CSR_CNT)
 #define DUMP_ROW 8
 
-#define MEMSIZE 512 * 1024 * 1024
+#define MEMSIZE 64 * 1024 * 1024
 
 #define STARTPC 0x7c00
 #define RESET_VECTOR 0
