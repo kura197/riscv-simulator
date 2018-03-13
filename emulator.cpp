@@ -42,6 +42,21 @@ void Emulator::load_memory(ifstream *binary, uint32_t bin_addr, uint32_t mem_add
 	binary->seekg(0,ios_base::beg);
 }
 
+void Emulator::read_sector(ifstream *binary, uint32_t offset, uint32_t size){
+	int memsize = 0;
+	int8_t read_mem[size];
+	int8_t* ptr = read_mem;
+	binary->seekg(offset * sizeof(int8_t));
+	while(!binary->eof() && memsize < size){
+		binary->read((char*)ptr, sizeof(uint8_t));
+		ptr++;
+		memsize++;
+	}
+	for(int i = 0; i < size; i++)
+		read_sec.push(read_mem[i]);
+	binary->seekg(0,ios_base::beg);
+}
+
 void Emulator::clear_registers(){
 	for(int i=0;i<USER_REG_CNT;i++)
 		x[i] = 0;
@@ -124,6 +139,11 @@ int8_t Emulator::get_mem8(uint32_t addr){
 		}else if(addr == COM1+5){
 			int8_t LSR = (uart_rx.empty()) ? 0x0 : 0x01;
 			return LSR;
+		//SECTOR
+		}else if(addr == 0x1F0){
+			int8_t sector = read_sec.front();
+			read_sec.pop();
+			return sector;
 		}else
 			return io_mem[addr];
 	}else

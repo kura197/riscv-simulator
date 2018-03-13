@@ -60,6 +60,7 @@ class Emulator{
 	int8_t runlevel;
 	queue<int8_t> uart_rx;
 	queue<int8_t> uart_tx;
+	queue<int8_t> read_sec;
 	fd_set kbd_fd;
 	uint64_t mtime;
 	uint64_t mtimecmp;
@@ -69,6 +70,7 @@ class Emulator{
 	~Emulator();
 	uint32_t get_PC(){ return V2P(PC, -1);};
 	void load_memory(ifstream *binary, uint32_t bin_addr, uint32_t mem_addr, int size);
+	void read_sector(ifstream *binary, uint32_t offset, uint32_t size);
 	void clear_registers();
 	uint32_t fetch();
 	void dump_registers(int num);

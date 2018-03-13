@@ -45,8 +45,6 @@ int main(int argc, char* argv[]){
 	term.c_lflag &= ~ICANON;
 	tcsetattr(STDIN_FILENO, TCSANOW, &term);
 	while(1){
-		fflush(stdin);
-		fflush(stdout);
 		interrupt(&emu);
 		if(FLAGS_g && gdb.attach){
 			if(gdb.step){
@@ -91,7 +89,7 @@ int main(int argc, char* argv[]){
 	}
 	emu.dump_registers(0);
 	printf("program ended successfully at PC = %08x\n", emu.PC-4);
-	//emu.dump_memory(0xf00,0x65);
+	emu.dump_memory(0x10000,4096);
 
 	binary.close();
 	tcsetattr(STDIN_FILENO, TCSANOW, &save);
@@ -99,19 +97,35 @@ int main(int argc, char* argv[]){
 }
 
 void ioport(Emulator* emu, ifstream *binary){
-
 /*  READ DISK DATA  */
-//0x1F3:	read op
-//0x1F4 - 0x1F7:	phisical address
-//0x1F8 - 0x1FB:	read address(offset)
-//0x1FC - 0x1FF:	read size
-	if(emu->get_mem8(IO_BASE+0x1F3) == 1){
-		emu-> store_mem8(IO_BASE+0x1F3, 0);
-		uint32_t pa = emu->get_mem32(IO_BASE+0x1F4);
-		uint32_t offset = emu->get_mem32(IO_BASE+0x1F8) * SECTSIZE;
-		uint32_t size = emu->get_mem32(IO_BASE+0x1FC);
+//0x1F0:	read data
+//0x1F2:	num of read sector??
+//0x1F3 - 0x1F6:	offset
+//0x1F7:	== 0x20 -> read
+//			&0xC0 == 0x40 -> ready to read 
+
+	if(emu->get_mem8(IO_BASE+0x1F7) == 0x20){
+		int32_t offset = emu->get_mem32(IO_BASE+0x1F3) * SECTSIZE;
+		int32_t size = emu->get_mem8(IO_BASE+0x1F2) * SECTSIZE;
 		if(FLAGS_d){
-			emu->dump_memory(IO_BASE+0x1F4,12);
+			emu->dump_memory(IO_BASE+0x1F0,7);
+		}
+		emu->read_sector(binary, offset, size);
+	}
+	emu-> store_mem8(IO_BASE+0x1F7, 0x40);
+
+/*  READ DISK DATA test  */
+//0x1E3:	read op
+//0x1E4 - 0x1E7:	phisical address
+//0x1E8 - 0x1EB:	read address(offset)
+//0x1EC - 0x1EF:	read size
+	if(emu->get_mem8(IO_BASE+0x1E3) == 1){
+		emu-> store_mem8(IO_BASE+0x1E3, 0);
+		uint32_t pa = emu->get_mem32(IO_BASE+0x1E4);
+		uint32_t offset = emu->get_mem32(IO_BASE+0x1E8) * SECTSIZE;
+		uint32_t size = emu->get_mem32(IO_BASE+0x1EC);
+		if(FLAGS_d){
+			emu->dump_memory(IO_BASE+0x1E4,12);
 		}
 		emu->load_memory(binary, offset, pa, size);
 	}
