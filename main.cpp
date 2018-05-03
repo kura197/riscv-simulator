@@ -14,6 +14,7 @@ void ioport(Emulator* emu, ifstream *binary);
 
 DEFINE_bool(d, false, "set debug flag");
 DEFINE_bool(g, false, "wait gdb remote");
+DEFINE_bool(t, false, "test");
 
 using namespace std;
 
@@ -33,7 +34,12 @@ int main(int argc, char* argv[]){
 		return 1;
 	}
 	Emulator emu;
-	emu.load_memory(&binary, 0x0, 0x7c00, 0x200);
+	if(!FLAGS_t)
+		emu.load_memory(&binary, 0x0, STARTPC, 0x200);
+	else{
+		emu.load_memory(&binary, 0x0, 0x0, 0x1000);
+		emu.PC = 0x0;
+	}
 	rsp gdb(&emu);
 	init_instruction();
 	uint32_t instr;
@@ -89,7 +95,7 @@ int main(int argc, char* argv[]){
 	}
 	emu.dump_registers(0);
 	printf("program ended successfully at PC = %08x\n", emu.PC-4);
-	emu.dump_memory(0x10000,4096);
+	emu.dump_memory(0xF00,12);
 
 	binary.close();
 	tcsetattr(STDIN_FILENO, TCSANOW, &save);
@@ -132,7 +138,7 @@ void ioport(Emulator* emu, ifstream *binary){
 
 /* UART */
 //0x3F8	Write/Read
-//0x3f8+5:buffer empty flag
+//0x3F8+5:buffer empty flag
 //0x3F9 - 0x3FF	Reserved
 	if(!emu->uart_tx.empty()){
 		char ch = emu->uart_tx.front();

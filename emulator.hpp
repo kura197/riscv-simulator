@@ -15,7 +15,8 @@ using namespace std;
 #define NUM_REGS (USER_REG_CNT + CSR_CNT)
 #define DUMP_ROW 8
 
-#define MEMSIZE 64 * 1024 * 1024
+//#define MEMSIZE 64 * 1024 * 1024
+#define MEMSIZE 8 * 1024 * 1024
 
 #define STARTPC 0x7c00
 #define RESET_VECTOR 0
@@ -25,7 +26,8 @@ using namespace std;
 #define LEVELS 2
 #define PTESIZE 4
 
-#define IO_BASE 0xFE000000
+//#define IO_BASE 0xFE000000
+#define IO_BASE 0xFFFFF000
 #define COM1 0x3F8
 #define MTIME_L 0x500
 #define MTIME_H 0x504

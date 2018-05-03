@@ -279,8 +279,6 @@ void OP_IR(Emulator* emu, decoder_t d){
 				emu->x[d.rd] = (uint32_t)emu->x[d.rs1] >> d.rs2;
 			//SRAI
 			else if(d.funct7	== 0b0100000)
-				//emu->x[d.rd] = (d.imm >> 31) ? (emu->x[d.rs1] >> (d.imm & 0b11111)) | 0xffffff << (32 - d.imm & 0b11111)
-				//								: emu->x[d.rs1] >> (d.imm & 0b11111);
 				emu->x[d.rd] = emu->x[d.rs1] >> d.rs2;
 			else
 				cout << "error : OP_IR/SRLI_SRAI FUNCT7 erorr" << endl;
@@ -331,8 +329,6 @@ void OP_R(Emulator* emu, decoder_t d){
 					emu->x[d.rd] = (uint32_t)emu->x[d.rs1] >> (emu->x[d.rs2] & 0b11111);
 				//SRA
 				else
-					//emu->x[d.rd] = (emu->x[d.rs1] >> 31) ? (emu->x[d.rs1] >> (emu->x[d.rs2] & 0b11111)) | 0xffffff << (32 - emu->x[d.rs2] & 0b11111)
-					//								: emu->x[d.rs1] >> (emu->x[d.rs2] & 0b11111);
 					emu->x[d.rd] = emu->x[d.rs1] >> (emu->x[d.rs2] & 0b11111);
 				break;
 				//OR
@@ -396,7 +392,8 @@ void OP_R(Emulator* emu, decoder_t d){
 }
 
 void OP_SYSTEM(Emulator* emu, decoder_t d){
-	if(num2csr == 0){
+	//if(num2csr == 0){
+	if(emu->runlevel == 0 && !(d.funct3 == 0b000 && d.funct7 == 0)){
 		cout << "illegal privilleged level" << endl;
 		return;
 	}
