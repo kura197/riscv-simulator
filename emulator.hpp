@@ -15,8 +15,8 @@ using namespace std;
 #define NUM_REGS (USER_REG_CNT + CSR_CNT)
 #define DUMP_ROW 8
 
-//#define MEMSIZE 64 * 1024 * 1024
-#define MEMSIZE 8 * 1024 * 1024
+#define MEMSIZE 64 * 1024 * 1024
+//#define MEMSIZE 8 * 1024 * 1024
 
 #define STARTPC 0x7c00
 #define RESET_VECTOR 0
@@ -39,6 +39,7 @@ using namespace std;
 #define PAGE_X 0
 #define PAGE_W 1
 #define PAGE_R 2
+#define TLB_SIZE 16
 
 enum PLEVEL{U, S, R, M};
 
@@ -66,6 +67,10 @@ class Emulator{
 	fd_set kbd_fd;
 	uint64_t mtime;
 	uint64_t mtimecmp;
+    uint32_t TLB_PPN[TLB_SIZE];
+    uint32_t TLB_VPN[TLB_SIZE];
+    uint8_t TLB_ACTIVE[TLB_SIZE];
+    uint8_t TLB_IDX;
 
 
 	Emulator();
@@ -88,6 +93,7 @@ class Emulator{
 	int32_t get_phys_mem32(int32_t addr);
 	uint32_t V2P(uint32_t va, int mode);
 	void print_error(string error, int32_t va, int32_t a, int i, int32_t pte, int32_t old_pte);
+    uint32_t TLB_search(uint32_t vpn[]);
 };
 
 #endif

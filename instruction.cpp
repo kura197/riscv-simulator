@@ -398,6 +398,7 @@ void OP_SYSTEM(Emulator* emu, decoder_t d){
 		return;
 	}
 	uint8_t uimm = d.rs1;
+    int32_t csr_num;
 	switch(d.funct3){
 		//ECALL / MRET 
 		case 0b000:
@@ -436,33 +437,57 @@ void OP_SYSTEM(Emulator* emu, decoder_t d){
 			break;
 		//CSRRW
 		case 0b001:
-			emu->x[d.rd] = emu->csr[num2csr(d.csr, emu->runlevel)];
-			emu->csr[num2csr(d.csr, emu->runlevel)] = emu->x[d.rs1];
+             csr_num = num2csr(d.csr, emu->runlevel);
+			emu->x[d.rd] = emu->csr[csr_num];
+			emu->csr[csr_num] = emu->x[d.rs1];
+            if(csr_num == satp)
+                for(int i = 0; i < TLB_SIZE; i++)
+                    emu->TLB_ACTIVE[i] = 0;
 			break;
 		//CSRRS
 		case 0b010:
-			emu->x[d.rd] = emu->csr[num2csr(d.csr, emu->runlevel)];
-			emu->csr[num2csr(d.csr, emu->runlevel)] |= emu->x[d.rs1];
+            csr_num = num2csr(d.csr, emu->runlevel);
+			emu->x[d.rd] = emu->csr[csr_num];
+			emu->csr[csr_num] |= emu->x[d.rs1];
+            if(csr_num == satp)
+                for(int i = 0; i < TLB_SIZE; i++)
+                    emu->TLB_ACTIVE[i] = 0;
 			break;
 		//CSRRC
 		case 0b011:
-			emu->x[d.rd] = emu->csr[num2csr(d.csr, emu->runlevel)];
-			emu->csr[num2csr(d.csr, emu->runlevel)] &= ~emu->x[d.rs1];
+            csr_num = num2csr(d.csr, emu->runlevel);
+			emu->x[d.rd] = emu->csr[csr_num];
+			emu->csr[csr_num] &= ~emu->x[d.rs1];
+            if(csr_num == satp)
+                for(int i = 0; i < TLB_SIZE; i++)
+                    emu->TLB_ACTIVE[i] = 0;
 			break;
 		//CSRRWI
 		case 0b101:
-			emu->x[d.rd] = emu->csr[num2csr(d.csr, emu->runlevel)];
-			emu->csr[num2csr(d.csr, emu->runlevel)] = uimm;
+            csr_num = num2csr(d.csr, emu->runlevel);
+			emu->x[d.rd] = emu->csr[csr_num];
+			emu->csr[csr_num] = uimm;
+            if(csr_num == satp)
+                for(int i = 0; i < TLB_SIZE; i++)
+                    emu->TLB_ACTIVE[i] = 0;
 			break;
 		//CSRRSI
 		case 0b110:
-			emu->x[d.rd] = emu->csr[num2csr(d.csr, emu->runlevel)];
-			emu->csr[num2csr(d.csr, emu->runlevel)] |= uimm;
+            csr_num = num2csr(d.csr, emu->runlevel);
+			emu->x[d.rd] = emu->csr[csr_num];
+			emu->csr[csr_num] |= uimm;
+            if(csr_num == satp)
+                for(int i = 0; i < TLB_SIZE; i++)
+                    emu->TLB_ACTIVE[i] = 0;
 			break;
 		//CSRRCI
 		case 0b111:
-			emu->x[d.rd] = emu->csr[num2csr(d.csr, emu->runlevel)];
-			emu->csr[num2csr(d.csr, emu->runlevel)] &= ~uimm;
+            csr_num = num2csr(d.csr, emu->runlevel);
+			emu->x[d.rd] = emu->csr[csr_num];
+			emu->csr[csr_num] &= ~uimm;
+            if(csr_num == satp)
+                for(int i = 0; i < TLB_SIZE; i++)
+                    emu->TLB_ACTIVE[i] = 0;
 			break;
 		default:
 			cout << "error : OP_SYSTEM/no match funst3" << endl;

@@ -23,6 +23,7 @@ Emulator::Emulator(){
 	memory = new uint8_t[MEMSIZE];
 	io_mem = new uint8_t[0 - IO_BASE];
 	uart_rx.push(0);
+    TLB_IDX = 0;
 }
 
 Emulator::~Emulator(){
@@ -244,6 +245,11 @@ uint32_t Emulator::V2P(uint32_t va, int mode){
 	uint32_t i = LEVELS - 1;
 	uint32_t pte;
 	uint32_t old_pte;
+    uint32_t tmp_ppn;
+    if(tmp_ppn = TLB_search(vpn)){
+        pa = tmp_ppn << 12 | pa_offset;
+        return pa;
+    }
 	while(1){
 		pte = (uint32_t)(a + vpn[i] * PTESIZE);
 		if(V(get_phys_mem32(pte)) == 0){
@@ -308,8 +314,10 @@ uint32_t Emulator::V2P(uint32_t va, int mode){
 	if(i > 0)
 		ppn[0] = vpn[0];
 	pa = ppn[1] << 22 | ppn[0] << 12 | pa_offset;
+    TLB_PPN[TLB_IDX] = (ppn[1] << 10) + ppn[0];
+    TLB_VPN[TLB_IDX] = (vpn[1] << 10) + vpn[0];
+    TLB_ACTIVE[TLB_IDX++] = 1;
 	return pa;
-
 }
 
 void Emulator::print_error(string error, int32_t va, int32_t a, int i, int32_t pte, int32_t old_pte){
@@ -331,3 +339,15 @@ void Emulator::print_error(string error, int32_t va, int32_t a, int i, int32_t p
 		//cout << "simulation halted" << endl;
 }
 
+uint32_t Emulator::TLB_search(uint32_t vpn[]){
+    uint32_t ppn = 0;
+    uint32_t tmp_vpn = (vpn[1] << 10) + vpn[0];
+    //printf("VPN : %x\n",tmp_vpn);
+    for(int i = 0; i < TLB_SIZE; i++){
+        if(TLB_ACTIVE[i] && TLB_VPN[i] == tmp_vpn){
+            ppn = TLB_PPN[i];
+            break;
+        }
+    }
+    return ppn;
+}
