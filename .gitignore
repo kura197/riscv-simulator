@@ -1,0 +1,6 @@
+
+*.o
+pdf/
+sample/
+*.bin
+*.img
