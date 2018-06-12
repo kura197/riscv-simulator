@@ -1,1 +1,1 @@
-# kura-xv6_riscv
+# kura-riscv__simulator
