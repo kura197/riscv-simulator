@@ -4,9 +4,9 @@
 #include<stdio.h>
 #include<iostream>
 #include<fstream>
-#include "csr.hpp"
+#include "csr.h"
 #include "reg.h"
-#include "emulator.hpp"
+#include "emulator.h"
 
 using namespace std;
 
