@@ -286,11 +286,6 @@ string rsp::get_packet (){
             count           = count + 1;
         }
 
-        /* Mark the end of the buffer with EOS - it's convenient for non-binary
-           data to be valid strings. */
-        //buf[count] = 0;
-        //buf.len         = count;
-
         /* If we have a valid end of packet char, validate the checksum */
         if ('#' == ch){
             unsigned char  xmitcsum;	/* The checksum in the packet */
@@ -416,11 +411,6 @@ void rsp::put_str_packet (const string str){
                 "truncated\n", str);
         len = GDB_BUF_MAX - 1;
     }
-
-    //strncpy (buf.data, str, len);
-    //buf.data[len] = 0;
-    //buf.len       = len;
-
     put_packet (str);
 
 }	/* put_str_packet () */
@@ -491,9 +481,6 @@ void rsp::rsp_read_all_regs(){
     for (r = 0; r < USER_REG_CNT; r++){
         reg2hex (gdb_emu->x[r], &buf);
     }
-    //reg2hex (gdb_emu->PC-4, &buf);
-    //reg2hex (gdb_emu->PC, &buf);
-    //reg2hex (gdb_emu->x[r], &buf);
 
     put_packet (buf);
 

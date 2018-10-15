@@ -15,8 +15,8 @@ using namespace std;
 
 bool FLAGS_d;
 int main(int argc, char* argv[]){
-    if(argc != 2){
-        cout<< "usage: sim [ROM] [-d] [-g] [-t]" << endl;
+    if(argc == 1){
+        cout<< "usage: sim [ROM] [-d] [-g] [-t] [-w] [-p gdb_port]" << endl;
         return -1;
     }
     ifstream binary(argv[1],ios::in|ios::binary);
@@ -27,8 +27,8 @@ int main(int argc, char* argv[]){
     int opt;
     int port = 20000;
     bool watch = false;
-    bool FLAGS_t;
-    bool FLAGS_g;
+    bool FLAGS_t = false;
+    bool FLAGS_g = false;
     while((opt = getopt(argc, argv, "dgtp:w")) != -1){
         switch(opt){
             case 'd':
@@ -47,7 +47,7 @@ int main(int argc, char* argv[]){
                 port = atoi(optarg);
                 break;
             default:
-                cout<< "usage: sim [ROM] [-d] [-g] [-t]" << endl;
+                cout<< "usage: sim [ROM] [-d] [-g] [-t] [-w] [-p gdb_port]" << endl;
                 return -1;
                 break;
         }
@@ -103,7 +103,6 @@ int main(int argc, char* argv[]){
         if(FLAGS_d){
             cout << endl;
             emu.dump_registers(0);
-            //emu.dump_memory(0x10000,16);
             printf("PC = %08x, Code = %08x, runlevel = %d\n",emu.PC-4,instr,emu.runlevel);
         }
         //instruction
