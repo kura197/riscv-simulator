@@ -1,1 +1,0 @@
-/usr/bin/c++    -rdynamic CMakeFiles/emu_riscv.dir/main.cpp.o CMakeFiles/emu_riscv.dir/instruction.cpp.o CMakeFiles/emu_riscv.dir/csr.cpp.o CMakeFiles/emu_riscv.dir/trap.cpp.o  -o emu_riscv /usr/lib/libgflags.so.2.2.1 -lpthread 
