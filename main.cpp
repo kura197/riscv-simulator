@@ -16,12 +16,12 @@ using namespace std;
 bool FLAGS_d;
 int main(int argc, char* argv[]){
     if(argc == 1){
-        cout<< "usage: sim [ROM] [-d] [-g] [-t] [-w] [-p gdb_port]" << endl;
+        cout<< "usage: sim [.img] [-d] [-g] [-t] [-w] [-p gdb_port]" << endl;
         return -1;
     }
     ifstream binary(argv[1],ios::in|ios::binary);
     if(!binary){
-        cout << "can not open binary file" << endl;
+        cout << "can not open img file" << endl;
         return -1;
     }
     int opt;
