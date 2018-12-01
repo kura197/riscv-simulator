@@ -16,7 +16,7 @@ using namespace std;
 bool FLAGS_d;
 int main(int argc, char* argv[]){
     if(argc == 1){
-        cout<< "usage: sim [.img] [-d] [-g] [-t] [-w] [-p gdb_port]" << endl;
+        cout<< "usage: ./riscv_simulator [.img] [-d] [-g] [-t] [-w] [-p gdb_port]" << endl;
         return -1;
     }
     ifstream binary(argv[1],ios::in|ios::binary);
